@@ -24,8 +24,13 @@ pipeline {
         VENV_DIR = "venv_daily_${env.BUILD_ID}"
         // Disable SCM polling for this pipeline
         DISABLE_SCM_TRIGGER = true
-        // Credentials for feature tests
+        // Credentials for feature tests        
         MEDICOVER_USERDATA = credentials('medicover_userdata')
+        POSTGRES_PASSWORD = credentials('medicony_postgres_password')
+        POSTGRES_PORT = "${env.MEDICONY_POSTGRES_PORT}"
+        POSTGRES_HOST = "${env.MEDICONY_POSTGRES_HOST}"
+        POSTGRES_USER = "${env.MEDICONY_POSTGRES_USER}"
+        POSTGRES_DATABASE = "${env.MEDICONY_POSTGRES_DATABASE}"
     }
 
     stages {
@@ -44,6 +49,11 @@ pipeline {
 MEDICOVER_USERDATA=${env.MEDICOVER_USERDATA}
 SLEEP_PERIOD_SEC=300
 LOG_PATH=log/medicony.log
+POSTGRES_HOST=${env.POSTGRES_HOST}
+POSTGRES_PORT=${env.POSTGRES_PORT}
+POSTGRES_USER=${env.POSTGRES_USER}
+POSTGRES_PASSWORD=${env.POSTGRES_PASSWORD}
+POSTGRES_DATABASE=${env.POSTGRES_DATABASE}
 EOF
                     """
                     
