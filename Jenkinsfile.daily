@@ -104,7 +104,7 @@ EOF
                     if (params.RUN_FULL_FEATURE_TEST) {
                         reportCommand = "pytest feature_test/ --tb=short --junit-xml=daily-test-results.xml"
                     } else {
-                        def coreTests = "feature_test/test_auth.py feature_test/test_medicine_feature.py feature_test/test_booking.py::test_find_real_examination_appointments feature_test/test_booking.py::test_find_fake_appointment"
+                        def coreTests = "feature_test/test_auth.py feature_test/test_medicine_finder.py feature_test/test_booking.py::test_find_real_examination_appointments feature_test/test_booking.py::test_find_fake_appointment"
                         reportCommand = "pytest ${coreTests} --tb=short --junit-xml=daily-test-results.xml"
                     }
                     
