@@ -18,6 +18,7 @@ pipeline {
         BUILD_NAME = "${SAFE_BRANCH_NAME}_${env.BUILD_ID}"
         VENV_DIR = "venv_${env.BUILD_NAME}"
         GITOPS_REPO = "${env.MEDICONY_GITOPS_REPO}"
+        DOCKER_REGISTRY = "${env.DOCKER_REGISTRY}"
         // Initialize SKIP_DEPLOYMENT from parameter, but allow runtime override
         SKIP_DEPLOYMENT_PARAM = "${params.SKIP_DEPLOYMENT.toString()}"
         DEPLOY_TO_ARGOCD_PARAM = "${params.DEPLOY_TO_ARGOCD.toString()}"
