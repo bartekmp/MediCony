@@ -47,7 +47,7 @@ class WatchService:
         auto_book = kwargs.get("auto_book", False)
         time_range = kwargs.get("time_range", "")
         account = kwargs.get("account")
-        
+
         try:
             if region is None:
                 raise ValueError("Region is required")

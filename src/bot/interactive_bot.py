@@ -6,8 +6,7 @@ from aiogram import Bot, Dispatcher
 from pharmaradar import MedicineWatchdog
 
 from src.bot.commands.logs import register_logs_handler
-from src.bot.commands.medicine_activate import \
-    register_activate_medicine_handler
+from src.bot.commands.medicine_activate import register_activate_medicine_handler
 from src.bot.commands.medicine_add import register_add_medicine_handler
 from src.bot.commands.medicine_edit import register_edit_medicine_handler
 from src.bot.commands.medicine_list import register_medicines_handler

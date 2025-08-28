@@ -23,9 +23,9 @@ class PharmaDbLogic(BaseDbLogic):
                 with self.get_session() as session:
                     # Convert enum to string value if needed
                     min_availability_value = medicine.min_availability
-                    if hasattr(min_availability_value, 'value'):
+                    if hasattr(min_availability_value, "value"):
                         min_availability_value = min_availability_value.value
-                    
+
                     new_medicine = MedicineModel(
                         name=medicine.name,
                         dosage=medicine.dosage,
@@ -151,7 +151,7 @@ class PharmaDbLogic(BaseDbLogic):
                     if min_availability is not None:
                         # Convert enum to string value if needed
                         min_availability_value = min_availability
-                        if hasattr(min_availability_value, 'value'):
+                        if hasattr(min_availability_value, "value"):
                             min_availability_value = min_availability_value.value  # type: ignore
                         update_data["min_availability"] = min_availability_value
                     if title is not None:

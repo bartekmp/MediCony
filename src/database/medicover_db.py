@@ -261,7 +261,7 @@ class MedicoverDbLogic(BaseDbLogic):
         time_range: Optional[str] = None,
         exclusions: Optional[str] = None,
         auto_book: Optional[bool] = None,
-    account: Optional[str] = None,
+        account: Optional[str] = None,
     ) -> bool:
         """Update a watch in the database."""
         with self._lock:

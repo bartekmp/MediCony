@@ -216,7 +216,9 @@ def command_line_parser() -> argparse.ArgumentParser:
     edit_watch = subparsers.add_parser("edit-watch", help="Edit an existing watch")
     edit_watch.add_argument("-i", "--id", required=True, type=int, help="Watch ID to edit")
     edit_watch.add_argument("-m", "--city", required=False, default=None, type=str, help="City name")
-    edit_watch.add_argument("-A", "--account", required=False, type=str, help="Medicover account alias (ignored if watch already has one)")
+    edit_watch.add_argument(
+        "-A", "--account", required=False, type=str, help="Medicover account alias (ignored if watch already has one)"
+    )
     edit_watch.add_argument("-c", "--clinic", required=False, default=None, type=int, help="Clinic ID")
     edit_watch.add_argument(
         "-B",

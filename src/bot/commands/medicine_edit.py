@@ -362,7 +362,7 @@ def register_edit_medicine_handler(dispatcher: Dispatcher, medicine_service: Med
                 await state.clear()
                 log.info(f"↩ Failed command: {command_name} (missing value)")
                 return
-                
+
             new_value = data.get(data_key)
 
             # Update the medicine
@@ -377,7 +377,7 @@ def register_edit_medicine_handler(dispatcher: Dispatcher, medicine_service: Med
                 if updated_medicine:
                     field_display_names = {
                         "name": "Name",
-                        "dosage": "Dosage", 
+                        "dosage": "Dosage",
                         "amount": "Amount",
                         "location": "Location",
                         "radius_km": "Radius",

@@ -258,7 +258,9 @@ class MedicoverApp:
         # Retrieve all appointments marked as booked from the database
         booked_appointments = self.db_client.get_booked_appointments()
         # Find the right appointment to cancel by ID
-        filtered_appointments_by_id: list[tuple[int, Appointment]] = list(filter(lambda x: x[0] == self.args.id, booked_appointments))
+        filtered_appointments_by_id: list[tuple[int, Appointment]] = list(
+            filter(lambda x: x[0] == self.args.id, booked_appointments)
+        )
         if not filtered_appointments_by_id:
             log.error(f"No appointment with ID: {self.args.id} was found")
 

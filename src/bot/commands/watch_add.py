@@ -46,7 +46,9 @@ class AddWatchStates(StatesGroup):
     confirming = State()
 
 
-def register_add_watch_handler(dispatcher: Dispatcher, watch_service: WatchService, config: MediConyConfig | None = None):
+def register_add_watch_handler(
+    dispatcher: Dispatcher, watch_service: WatchService, config: MediConyConfig | None = None
+):
     router = Router()
     command_name = "/watch_add"
     suggested = get_suggested_properties()
@@ -78,6 +80,7 @@ def register_add_watch_handler(dispatcher: Dispatcher, watch_service: WatchServi
 
     # Conditionally register account choosing handler only if needed to preserve handler ordering for tests
     if len(account_aliases) > 1:
+
         @router.message(AddWatchStates.choosing_account)
         async def choose_account(message: types.Message, state: FSMContext):  # type: ignore
             alias = message.text.strip() if message.text else None
