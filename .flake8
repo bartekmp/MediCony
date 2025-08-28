@@ -1,0 +1,4 @@
+[flake8]
+ignore = E203,E402,E501,E731,W503
+max-line-length = 132
+exclude = .git,__pycache__,build,dist,.venv,.env,.pytest_cache,*.egg-info,*.egg,*.db,*.log

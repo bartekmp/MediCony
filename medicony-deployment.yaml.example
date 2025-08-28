@@ -1,0 +1,106 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: medicony-db-pv
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "<your host path with db directory>"
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: medicony-log-pv
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "<your host path with log directory>"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: medicony-db-pvc
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: medicony-log-pvc
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: medicony-deployment
+  labels:
+    app: medicony
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: medicony
+  template:
+    metadata:
+      labels:
+        app: medicony
+    spec:
+      containers:
+      - name: medicony
+        image: "ghcr.io/bartekmp/medicony:latest"
+        args: ["start"]
+        volumeMounts:
+        - name: medicony-db-storage
+          mountPath: /app/db
+        - name: medicony-log-storage
+          mountPath: /app/log
+        resources:
+          limits:
+            memory: "1024Mi"
+            cpu: "500m"
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+        env:
+        # Required: Medicover account credentials
+        - name: MEDICOVER_USERDATA
+          value: "username:password"  # Replace with your credentials
+        # Required for Telegram notifications
+        - name: MEDICONY_TELEGRAM_CHAT_ID
+          value: ""  # Your Telegram chat ID
+        - name: MEDICONY_TELEGRAM_TOKEN
+          value: ""  # Your Telegram bot token
+        # Optional: Application settings
+        - name: SLEEP_PERIOD_SEC
+          value: "300"  # Check interval in seconds
+        - name: LOG_PATH
+          value: "/app/log/medicony.log"  # Log file path
+        # Optional: Telegram bot defaults
+        - name: TELEGRAM_ADD_COMMAND_SUGGESTED_PROPERTIES
+          value: "region:123[Your region];city:Your city"  # Default values for bot
+      volumes:
+      - name: medicony-db-storage
+        persistentVolumeClaim:
+          claimName: medicony-db-pvc
+      - name: medicony-log-storage
+        persistentVolumeClaim:
+          claimName: medicony-log-pvc

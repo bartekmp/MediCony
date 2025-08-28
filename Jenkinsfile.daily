@@ -1,0 +1,188 @@
+pipeline {
+    agent any
+
+    // Schedule to run daily at 2 AM
+    triggers {
+        cron('0 2 * * *')
+    }
+
+    parameters {
+        booleanParam(
+            name: 'VERBOSE_OUTPUT',
+            defaultValue: true,
+            description: 'Enable verbose test output'
+        )
+        booleanParam(
+            name: 'RUN_FULL_FEATURE_TEST',
+            defaultValue: false,
+            description: 'Run full feature tests including booking tests that actually book and cancel appointments'
+        )
+    }
+
+    environment {
+        PROJECT_NAME = 'medicony'
+        VENV_DIR = "venv_daily_${env.BUILD_ID}"
+        // Disable SCM polling for this pipeline
+        DISABLE_SCM_TRIGGER = true
+        // Credentials for feature tests
+        MEDICOVER_USERDATA = credentials('medicover_userdata')
+    }
+
+    stages {
+        stage('Prepare Test Environment') {
+            steps {
+                echo 'Setting up daily test environment...'
+                script {
+                    // Use the latest main branch for weekly tests
+                    sh "git checkout main"
+                    sh "git pull origin main"
+                    sh "mkdir -p log && mkdir -p db"
+                    // Create .env file for feature tests
+                    echo 'Creating .env file for feature tests...'
+                    sh """
+                        cat > .env << EOF
+MEDICOVER_USERDATA=${env.MEDICOVER_USERDATA}
+SLEEP_PERIOD_SEC=300
+LOG_PATH=log/medicony.log
+EOF
+                    """
+                    
+                    echo "Creating virtual environment for daily tests..."
+                    sh "python3.13 -m venv ${env.VENV_DIR}"
+                    
+                    sh """
+                        . ${env.VENV_DIR}/bin/activate
+                        python3.13 -m pip install -e .[dev]
+                    """
+                }
+            }
+        }
+
+        stage('Run Daily Feature Tests') {
+            steps {
+                echo "Running daily feature tests"
+                script {
+                    def verboseFlag = params.VERBOSE_OUTPUT ? "-v" : "-q"
+                    def testCommand = ""
+                    
+                    // Always run core feature tests
+                    def coreTests = "feature_test/test_auth.py feature_test/test_medicine_finder.py feature_test/test_booking.py::test_find_real_examination_appointments feature_test/test_booking.py::test_find_fake_appointment"
+                    
+                    if (params.RUN_FULL_FEATURE_TEST) {
+                        echo "Running FULL feature tests including booking tests that will book and cancel real appointments!"
+                        testCommand = "pytest feature_test/ ${verboseFlag} --tb=short"
+                    } else {
+                        echo "Running core feature tests only (no actual booking/canceling)"
+                        testCommand = "pytest ${coreTests} ${verboseFlag} --tb=short"
+                    }
+                    
+                    sh """
+                        . ${env.VENV_DIR}/bin/activate
+                        ${testCommand}
+                    """
+                }
+            }
+        }
+
+        stage('Generate Test Report') {
+            steps {
+                echo 'Generating detailed test report...'
+                script {
+                    def reportCommand = ""
+                    
+                    // Generate report based on what tests were actually run
+                    if (params.RUN_FULL_FEATURE_TEST) {
+                        reportCommand = "pytest feature_test/ --tb=short --junit-xml=daily-test-results.xml"
+                    } else {
+                        def coreTests = "feature_test/test_auth.py feature_test/test_medicine_feature.py feature_test/test_booking.py::test_find_real_examination_appointments feature_test/test_booking.py::test_find_fake_appointment"
+                        reportCommand = "pytest ${coreTests} --tb=short --junit-xml=daily-test-results.xml"
+                    }
+                    
+                    sh """
+                        . ${env.VENV_DIR}/bin/activate
+                        ${reportCommand}
+                    """
+                }
+            }
+            post {
+                always {
+                    // Archive test results
+                    junit 'daily-test-results.xml'
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            echo 'Cleaning up daily test environment...'
+
+            sh "rm -rf log db"
+            sh "rm -rf ${env.VENV_DIR}"
+            sh "rm -f daily-test-results.xml"
+            sh "rm -f .env"
+        }
+        
+        success {
+            echo 'Daily feature tests completed successfully!'
+            script {
+                def testDescription = params.RUN_FULL_FEATURE_TEST ? 
+                    "Full feature tests (including real booking/canceling)" : 
+                    "Core feature tests only (safe mode)"
+                
+                emailext (
+                    subject: "✅ Daily Feature Tests Passed - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                    body: """
+                    Daily feature test execution completed successfully!
+                    
+                    Job: ${env.JOB_NAME}
+                    Build: #${env.BUILD_NUMBER}
+                    ${testDescription}
+                    Duration: ${currentBuild.durationString}
+                    
+                    Tests run:
+                    • test_auth.py
+                    • test_medicine_feature.py  
+                    • test_find_real_examination_appointments
+                    • test_find_fake_appointment
+                    ${params.RUN_FULL_FEATURE_TEST ? '• test_find_manually_and_book_real_examination\n                    • test_auto_find_and_book_real_examination' : ''}
+                    
+                    View results: ${env.BUILD_URL}
+                    """,
+                    to: "${env.CHANGE_AUTHOR_EMAIL ?: 'your-email@domain.com'}"
+                )
+            }
+        }
+        
+        failure {
+            echo 'Daily feature tests failed!'
+            script {
+                def testDescription = params.RUN_FULL_FEATURE_TEST ? 
+                    "Full feature tests (including real booking/canceling)" : 
+                    "Core feature tests only (safe mode)"
+                
+                emailext (
+                    subject: "❌ Daily Feature Tests Failed - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                    body: """
+                    Daily feature test execution failed!
+                    
+                    Job: ${env.JOB_NAME}
+                    Build: #${env.BUILD_NUMBER}
+                    ${testDescription}
+                    Duration: ${currentBuild.durationString}
+                    
+                    Tests that were supposed to run:
+                    • test_auth.py
+                    • test_medicine_feature.py  
+                    • test_find_real_examination_appointments
+                    • test_find_fake_appointment
+                    ${params.RUN_FULL_FEATURE_TEST ? '• test_find_manually_and_book_real_examination\n                    • test_auto_find_and_book_real_examination' : ''}
+                    
+                    Please check the logs: ${env.BUILD_URL}console
+                    """,
+                    to: "${env.CHANGE_AUTHOR_EMAIL ?: 'your-email@domain.com'}"
+                )
+            }
+        }
+    }
+}

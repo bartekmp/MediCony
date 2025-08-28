@@ -1,0 +1,37 @@
+name: Docker Image CI
+
+on:
+  pull_request:
+
+env:
+  IMAGE_NAME: medicony
+
+jobs:
+  build-for-pr-verification:
+    permissions:
+      packages: write
+      contents: read
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.head_ref }}
+
+      # Semantic release versioning is handled in Jenkins
+      # Image pushing is handled by Jenkins for production builds
+      # This workflow only builds images for verification in PRs
+
+      - name: Get version from latest tag
+        id: get_version
+        run: |
+          VERSION=$(git describe --tags --abbrev=0 | sed 's/^v//')
+          echo "SEMVER=$VERSION" >> $GITHUB_ENV
+          echo "Calculated version: $VERSION"
+
+      # Build Docker image for verification purposes in pull requests
+      # Production images are built and pushed by Jenkins
+      - name: Build the Docker image for PR verification
+        run: docker build . --file Dockerfile --build-arg VERSION=${{ env.SEMVER }} --tag $IMAGE_NAME:$SEMVER --label "runnumber=${GITHUB_RUN_ID}" --label "pr=${GITHUB_HEAD_REF}"

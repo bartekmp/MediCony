@@ -1,0 +1,28 @@
+102426 - Białystok
+104450 - Bielsko-Biała
+102424 - Bydgoszcz
+115682 - Częstochowa
+114060 - Elbląg
+102200 - Gliwice
+116902 - Inowrocław
+203 - Katowice
+109674 - Kielce
+104720 - Kostrzyn n/Odrą
+202 - Kraków
+113854 - Kwidzyn
+117524 - Leszno
+199 - Łódź
+100032 - Lublin
+121380 - Network Telemedycyna
+117526 - Olsztyn
+117 - Płock
+207 - Poznań
+121814 - Rzeszów
+253 - Słupsk
+110338 - Sosnowiec
+206 - Szczecin
+105814 - e-wizyta
+117528 - Toruń
+200 - Trójmiasto
+204 - Warszawa
+205 - Wrocław

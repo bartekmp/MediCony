@@ -1,0 +1,99 @@
+# This workflow will install Python dependencies, run tests and lint with a single version of Python
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
+
+name: Python application
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.13"
+
+      # Setup Chrome and ChromeDriver for Selenium tests
+      - name: Setup Chrome
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: stable
+
+      - name: Setup ChromeDriver
+        run: |
+          # Get Chrome version
+          CHROME_VERSION=$(google-chrome --version | cut -d ' ' -f3)
+          CHROME_MAJOR_VERSION=$(echo $CHROME_VERSION | cut -d '.' -f1)
+          echo "Chrome version: $CHROME_VERSION (major: $CHROME_MAJOR_VERSION)"
+
+          # Use Chrome for Testing API for all modern versions
+          echo "Downloading ChromeDriver using Chrome for Testing API..."
+
+          # Get the latest stable ChromeDriver
+          LATEST_VERSION=$(curl -s "https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions.json" | jq -r '.channels.Stable.version')
+          echo "Latest ChromeDriver version: $LATEST_VERSION"
+
+          # Download ChromeDriver
+          CHROMEDRIVER_URL="https://storage.googleapis.com/chrome-for-testing-public/${LATEST_VERSION}/linux64/chromedriver-linux64.zip"
+          echo "Downloading from: $CHROMEDRIVER_URL"
+
+          wget -O /tmp/chromedriver.zip "$CHROMEDRIVER_URL"
+          sudo unzip /tmp/chromedriver.zip -d /tmp/
+          sudo mv /tmp/chromedriver-linux64/chromedriver /usr/local/bin/chromedriver
+          sudo chmod +x /usr/local/bin/chromedriver
+
+          echo "ChromeDriver installed successfully:"
+          chromedriver --version
+
+      # Install virtual display for headless testing
+      - name: Install xvfb and jq
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb jq
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --upgrade setuptools
+          python -m pip install .[dev]
+
+      - name: Lint with flake8
+        run: |
+          # stop the build if there are Python syntax errors or undefined names
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+      - name: Test with pytest (with virtual display)
+        run: |
+          # Start Xvfb manually for better control
+          export DISPLAY=:99
+          Xvfb :99 -screen 0 1024x768x24 -ac +extension GLX &
+          XVFB_PID=$!
+
+          # Wait for Xvfb to start
+          sleep 2
+
+          # Run tests
+          pytest --ignore=feature_test/
+          PYTEST_EXIT=$?
+
+          # Clean up Xvfb
+          kill $XVFB_PID || true
+
+          # Exit with pytest's exit code
+          exit $PYTEST_EXIT
+        env:
+          # Set Chrome and ChromeDriver paths
+          CHROME_BIN: /usr/bin/google-chrome
+          CHROMEDRIVER_PATH: /usr/local/bin/chromedriver
