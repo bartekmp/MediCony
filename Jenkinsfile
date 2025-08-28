@@ -37,7 +37,7 @@ pipeline {
                         [$class: 'LocalBranch', localBranch: env.BRANCH_NAME]
                     ],
                     submoduleCfg: [],
-                    userRemoteConfigs: [[url: 'git@github.com:bartekmp/MediCony.git', credentialsId: 'github_token']]
+                    userRemoteConfigs: [[url: 'git@github.com:bartekmp/MediCony.git', credentialsId: 'github_ssh_key']]
                 ])
                 sh 'git config --global --add safe.directory $PWD'
                 sh 'git fetch --tags'
