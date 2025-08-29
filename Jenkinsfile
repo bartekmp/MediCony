@@ -209,18 +209,15 @@ pipeline {
                     echo 'Pushing Docker image to local registry...'
                     def versionTag = env.BRANCH_NAME == 'main' ? env.SEMVER : '999.0.0-dev'
 
-                    // Test registry connectivity first
-                    sh "curl -k --connect-timeout 10 --max-time 30 https://${env.DOCKER_REGISTRY}/v2/ || echo 'Registry connectivity test failed'"
-
                     // Enhanced push with retry logic and better timeouts
                     sh """
                         docker tag ${IMAGE_NAME}:${versionTag} ${env.DOCKER_REGISTRY}/${IMAGE_NAME}:${versionTag}
-                        DOCKER_CLIENT_TIMEOUT=0 COMPOSE_HTTP_TIMEOUT=0 docker push ${env.DOCKER_REGISTRY}/${IMAGE_NAME}:${versionTag}
+                        docker push ${env.DOCKER_REGISTRY}/${IMAGE_NAME}:${versionTag}
                     """
                     if (env.BRANCH_NAME == 'main') {
                         sh """
                             docker tag ${IMAGE_NAME}:latest ${env.DOCKER_REGISTRY}/${IMAGE_NAME}:latest
-                            DOCKER_CLIENT_TIMEOUT=0 COMPOSE_HTTP_TIMEOUT=0 docker push ${env.DOCKER_REGISTRY}/${IMAGE_NAME}:latest
+                            docker push ${env.DOCKER_REGISTRY}/${IMAGE_NAME}:latest
                         """
                     }
                 }
