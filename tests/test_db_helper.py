@@ -1,6 +1,7 @@
 """
 Test database logic using SQLAlchemy with SQLite for testing.
 """
+
 from typing import Optional
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -11,41 +12,42 @@ from src.models import Base
 
 class SqliteDbLogic(MedicoverDbLogic):
     """Test version of MedicoverDbLogic that uses SQLite instead of PostgreSQL."""
-    
+
     def __init__(self, db_path: str = ":memory:"):
         # Override the parent __init__ to use SQLite instead of calling super().__init__()
-        self._lock = __import__('threading').RLock()
-        
+        self._lock = __import__("threading").RLock()
+
         # Create SQLite database URL
         if db_path == ":memory:":
             database_url = "sqlite:///:memory:"
         else:
             database_url = f"sqlite:///{db_path}"
-        
+
         try:
             # Create engine
             self.engine = create_engine(database_url, echo=False)
-            
+
             # Create session factory
             self.SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=self.engine)
-            
+
             # Create tables
             Base.metadata.create_all(bind=self.engine)
-            
+
             # Don't call clear_db for test databases to avoid timezone issues
-            
+
         except Exception as e:
             raise Exception(f"Failed to connect to test SQLite database: {e}")
 
 
 class SqliteDbClient:
     """Test version of DbClient that uses SqliteDbLogic."""
-    
+
     def __init__(self, db_path: Optional[str] = None):
         self.db = SqliteDbLogic(db_path or ":memory:")
 
     def _parse_row_to_watch(self, row):
         from src.medicover.watch import Watch as MedicoverWatch
+
         # Convert a database row to a Watch object
         # Handle the case where multiple specialties are stored as a comma-separated string
         specialties = [int(w) for w in row[3].split(",")]
@@ -91,6 +93,7 @@ class SqliteDbClient:
 
     def get_booked_appointments(self):
         from src.medicover.appointment import Appointment as MedicoverAppointment
+
         appointments = self.db.get_booked_appointments()
         # Return a list of pairs id-appointment, id is required for cancelling an appointment via the app
         return [(ap[0], MedicoverAppointment.initialize_from_tuple(ap)) for ap in appointments]
@@ -100,8 +103,8 @@ class SqliteDbClient:
         watch_id: int,
         city: Optional[str] = None,
         clinic_id: Optional[int] = None,
-        start_date = None,
-        end_date = None,
+        start_date=None,
+        end_date=None,
         time_range: Optional[str] = None,
         exclusions: Optional[str] = None,
         auto_book: Optional[bool] = None,

@@ -9,7 +9,7 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import KeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from pharmaradar import MedicineWatchdog
 
-from src.bot.shared_utils import abort_and_skip_keyboard, escape_markdown, id_keyboard, is_abort
+from src.bot.shared_utils import escape_markdown, id_keyboard, is_abort
 from src.bot.validation_utils import validate_int
 from src.logger import log
 

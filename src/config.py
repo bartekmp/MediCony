@@ -55,7 +55,7 @@ def parse_medicover_accounts(raw: str) -> Tuple[Dict[str, Tuple[str, str]], str]
             # Fallback attempt: treat as single user:pass chunk - process only the first one
             if part.count(":") == 1:
                 user, pwd = part.split(":", 1)
-                alias = "default" if idx == 0 else f"account{idx+1}"
+                alias = "default" if idx == 0 else f"account{idx + 1}"
                 accounts[alias] = (user, pwd)
                 default_alias = alias
                 # Single account fallback - return immediately, ignore any other parts

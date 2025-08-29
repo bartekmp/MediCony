@@ -6,7 +6,7 @@ import os
 import threading
 from urllib.parse import quote_plus
 
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
 from src.logger import log

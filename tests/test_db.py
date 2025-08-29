@@ -7,8 +7,6 @@ It verifies database CRUD operations, data integrity, and proper handling of app
 """
 
 import datetime
-import os
-import tempfile
 from typing import Generator
 
 import pytest
@@ -16,7 +14,6 @@ import pytz
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
-from src.config import MediConyConfig
 from src.database import MedicoverDbClient
 from src.database.medicover_db import MedicoverDbLogic
 
@@ -25,7 +22,7 @@ def flatten_exclusions(exclusions_dict):
     """Helper function to flatten exclusions dictionary to string format."""
     if not exclusions_dict:
         return ""
-    
+
     parts = []
     for key, values in exclusions_dict.items():
         if isinstance(values, list):
@@ -33,8 +30,10 @@ def flatten_exclusions(exclusions_dict):
         else:
             values_str = str(values)
         parts.append(f"{key}:{values_str}")
-    
+
     return ";".join(parts)
+
+
 from src.id_value_util import IdValue
 from src.medicover.appointment import Appointment
 from src.medicover.watch import Watch
@@ -43,27 +42,27 @@ from src.models import Base, MedicoverAppointmentModel, MedicoverWatchModel, Med
 
 class SqliteDbLogic(MedicoverDbLogic):
     """Test version of DbLogic that uses SQLite for testing."""
-    
+
     def __init__(self, test_db_path: str = ":memory:"):
         # Override parent init to use SQLite for testing
-        self._lock = self.__class__.__dict__.get('_lock', None) or __import__('threading').RLock()
-        
+        self._lock = self.__class__.__dict__.get("_lock", None) or __import__("threading").RLock()
+
         # Use SQLite for testing
         if test_db_path == ":memory:":
             database_url = "sqlite:///:memory:"
         else:
             database_url = f"sqlite:///{test_db_path}"
-        
+
         try:
             # Create engine
             self.engine = create_engine(database_url, echo=False)
-            
+
             # Create session factory
             self.SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=self.engine)
-            
+
             # Create tables
             Base.metadata.create_all(bind=self.engine)
-            
+
             # Don't call clear_db to avoid timezone issues in tests
         except Exception as e:
             raise Exception(f"Failed to connect to test SQLite database: {e}")
@@ -71,11 +70,10 @@ class SqliteDbLogic(MedicoverDbLogic):
 
 class SqliteDbClient(MedicoverDbClient):
     """Test version of DbClient that uses SqliteDbLogic."""
-    
+
     def __init__(self, test_db_path: str = ":memory:"):
         # Override to use SqliteDbLogic instead of DbLogic
         self.db = SqliteDbLogic(test_db_path)
-
 
 
 @pytest.fixture
@@ -132,23 +130,13 @@ def test_clear_db(db: SqliteDbLogic) -> None:
     with db.get_session() as session:
         # Add past appointment
         past_appointment = MedicoverAppointmentModel(
-            clinic=1,
-            doctor=11,
-            date=past_date,
-            specialty=23,
-            visitType="Center",
-            bookingString="booking1"
+            clinic=1, doctor=11, date=past_date, specialty=23, visitType="Center", bookingString="booking1"
         )
         session.add(past_appointment)
-        
+
         # Add future appointment
         future_appointment = MedicoverAppointmentModel(
-            clinic=2,
-            doctor=22,
-            date=future_date,
-            specialty=24,
-            visitType="Center",
-            bookingString="booking2"
+            clinic=2, doctor=22, date=future_date, specialty=24, visitType="Center", bookingString="booking2"
         )
         session.add(future_appointment)
         session.commit()
@@ -161,7 +149,7 @@ def test_clear_db(db: SqliteDbLogic) -> None:
         appointments = session.query(MedicoverAppointmentModel).all()
         assert len(appointments) == 1, "Only one appointment (future) should remain"
         # Convert to actual date value for comparison
-        appointment_date = appointments[0].__dict__['date'] 
+        appointment_date = appointments[0].__dict__["date"]
         if appointment_date >= now.replace(tzinfo=None):
             assert True, "The remaining appointment should be the future one"
         else:
@@ -177,7 +165,7 @@ def test_clear_db(db: SqliteDbLogic) -> None:
         specialty=3,
         visitType="visitType1",
         bookingString="bookingString1",
-        bookingIdentifier=1
+        bookingIdentifier=1,
     )
     appointment2 = MedicoverAppointmentModel(
         clinic=11,
@@ -186,9 +174,9 @@ def test_clear_db(db: SqliteDbLogic) -> None:
         specialty=33,
         visitType="visitType2",
         bookingString="bookingString2",
-        bookingIdentifier=None
+        bookingIdentifier=None,
     )
-    
+
     with db.get_session() as session:
         session.add(appointment1)
         session.add(appointment2)
@@ -217,9 +205,7 @@ def test_add_appointment_history(db):
     db.add_appointment_history(appointment)
 
     with db.get_session() as session:
-        appointments = session.query(MedicoverAppointmentModel).filter_by(
-            clinic=clinic.id, doctor=doctor.id
-        ).all()
+        appointments = session.query(MedicoverAppointmentModel).filter_by(clinic=clinic.id, doctor=doctor.id).all()
         assert len(appointments) == 1
         assert appointments[0].clinic == clinic.id
         assert appointments[0].doctor == doctor.id
@@ -239,9 +225,9 @@ def test_update_appointment(db):
         specialty=specialty.id,
         visitType="visitType1",
         bookingString="bookingString1",
-        bookingIdentifier=0
+        bookingIdentifier=0,
     )
-    
+
     with db.get_session() as session:
         session.add(appointment_model)
         session.commit()
@@ -259,9 +245,7 @@ def test_update_appointment(db):
     db.update_appointment(appointment)
 
     with db.get_session() as session:
-        appointments = session.query(MedicoverAppointmentModel).filter_by(
-            clinic=clinic.id, doctor=doctor.id
-        ).all()
+        appointments = session.query(MedicoverAppointmentModel).filter_by(clinic=clinic.id, doctor=doctor.id).all()
         assert len(appointments) == 1
         assert appointments[0].bookingIdentifier == "1234567"
 
@@ -275,9 +259,9 @@ def test_remove_appointment(db):
         specialty=333,
         visitType="visitType1",
         bookingString="bookingString1",
-        bookingIdentifier=1
+        bookingIdentifier=1,
     )
-    
+
     with db.get_session() as session:
         session.add(appointment_model)
         session.commit()
@@ -311,9 +295,7 @@ def test_save_watch_with_not_all_fields(db):
     db.save_watch(watch)
 
     with db.get_session() as session:
-        watches = session.query(MedicoverWatchModel).filter_by(
-            region=region, specialty=str(specialty)
-        ).all()
+        watches = session.query(MedicoverWatchModel).filter_by(region=region, specialty=str(specialty)).all()
         assert len(watches) == 1
         assert watches[0].region == region
         assert watches[0].specialty == str(specialty)
@@ -332,9 +314,9 @@ def test_remove_watch(db):
         timeRange="09:00:00-17:00:00",
         autobook=True,
         exclusions="doctor:123;clinic:456",
-        type="Standard"
+        type="Standard",
     )
-    
+
     with db.get_session() as session:
         session.add(watch_model)
         session.commit()
@@ -360,7 +342,7 @@ def test_get_watches(db):
         timeRange="09:00-17:00",
         autobook=True,
         exclusions="doctor:123;clinic:456",
-        type="Standard"
+        type="Standard",
     )
     watch2 = MedicoverWatchModel(
         region=11,
@@ -373,9 +355,9 @@ def test_get_watches(db):
         timeRange="10:00-18:00",
         autobook=True,
         exclusions=None,
-        type="DiagnosticProcedure"
+        type="DiagnosticProcedure",
     )
-    
+
     with db.get_session() as session:
         session.add(watch1)
         session.add(watch2)
@@ -404,7 +386,7 @@ def test_dbclient_get_watches(db_client):
         timeRange="09:00-17:00",
         autobook=True,
         exclusions="doctor:123,999;clinic:456",
-        type="Standard"
+        type="Standard",
     )
     watch2 = MedicoverWatchModel(
         region=11,
@@ -417,9 +399,9 @@ def test_dbclient_get_watches(db_client):
         timeRange="10:00-18:00",
         autobook=True,
         exclusions="clinic:888",
-        type="DiagnosticProcedure"
+        type="DiagnosticProcedure",
     )
-    
+
     with db_client.db.get_session() as session:
         session.add(watch1)
         session.add(watch2)
@@ -452,9 +434,9 @@ def test_dbclient_remove_watch(db_client):
         timeRange="09:00-17:00",
         autobook=True,
         exclusions=None,
-        type="Standard"
+        type="Standard",
     )
-    
+
     with db_client.db.get_session() as session:
         session.add(watch_model)
         session.commit()
@@ -490,9 +472,7 @@ def test_dbclient_save_watch(db_client):
     db_client.save_watch(watch)
 
     with db_client.db.get_session() as session:
-        watches = session.query(MedicoverWatchModel).filter_by(
-            region=region, specialty=str(specialty)
-        ).all()
+        watches = session.query(MedicoverWatchModel).filter_by(region=region, specialty=str(specialty)).all()
         assert len(watches) == 1
         assert watches[0].region == region
         assert watches[0].city == "Aszchabad"
@@ -523,11 +503,9 @@ def test_dbclient_save_watch_multiple_specialties(db_client):
 
     db_client.save_watch(watch)
     specialty_str = ",".join([str(s) for s in specialty])
-    
+
     with db_client.db.get_session() as session:
-        watches = session.query(MedicoverWatchModel).filter_by(
-            region=region, specialty=specialty_str
-        ).all()
+        watches = session.query(MedicoverWatchModel).filter_by(region=region, specialty=specialty_str).all()
         assert len(watches) == 1
         assert watches[0].region == region
         assert watches[0].city == "Aszchabad"
@@ -550,9 +528,9 @@ def test_dbclient_update_appointment(db_client):
         specialty=specialty.id,
         visitType="visitType1",
         bookingString="bookingString1",
-        bookingIdentifier=None
+        bookingIdentifier=None,
     )
-    
+
     with db_client.db.get_session() as session:
         session.add(appointment_model)
         session.commit()
@@ -570,9 +548,7 @@ def test_dbclient_update_appointment(db_client):
     db_client.update_appointment(appointment)
 
     with db_client.db.get_session() as session:
-        appointments = session.query(MedicoverAppointmentModel).filter_by(
-            clinic=clinic.id, doctor=doctor.id
-        ).all()
+        appointments = session.query(MedicoverAppointmentModel).filter_by(clinic=clinic.id, doctor=doctor.id).all()
         assert len(appointments) == 1
         assert appointments[0].bookingIdentifier == "1994567"
 
@@ -607,9 +583,7 @@ def test_dbclient_save_appointments_and_filter_old(db_client):
     assert len(new_appointments) == 2
 
     with db_client.db.get_session() as session:
-        appointments = session.query(MedicoverAppointmentModel).filter_by(
-            clinic=clinic.id, doctor=doctor.id
-        ).all()
+        appointments = session.query(MedicoverAppointmentModel).filter_by(clinic=clinic.id, doctor=doctor.id).all()
         assert len(appointments) == 2
         assert appointments[0].clinic == clinic.id
         assert appointments[0].doctor == doctor.id
@@ -626,7 +600,7 @@ def test_dbclient_list_booked_appointments(db_client):
         specialty=456,
         visitType="visitType1",
         bookingString="bookingString1",
-        bookingIdentifier=123123123
+        bookingIdentifier=123123123,
     )
     appointment2 = MedicoverAppointmentModel(
         clinic=4,
@@ -635,7 +609,7 @@ def test_dbclient_list_booked_appointments(db_client):
         specialty=2,
         visitType="visitType1",
         bookingString="bookingString2",
-        bookingIdentifier=1
+        bookingIdentifier=1,
     )
     appointment3 = MedicoverAppointmentModel(
         clinic=111,
@@ -644,9 +618,9 @@ def test_dbclient_list_booked_appointments(db_client):
         specialty=333,
         visitType="visitType1",
         bookingString="bookingString3",
-        bookingIdentifier=None
+        bookingIdentifier=None,
     )
-    
+
     with db_client.db.get_session() as session:
         session.add(appointment1)
         session.add(appointment2)
@@ -678,7 +652,7 @@ def test_edit_watch_updates_fields(db_client):
         )
     )
     db_client.save_watch(watch)
-    
+
     with db_client.db.get_session() as session:
         watch_record = session.query(MedicoverWatchModel).filter_by(region=region, city="OldCity").first()
         watch_id = watch_record.id
@@ -727,14 +701,14 @@ def test_edit_watch_no_fields_to_update(db_client):
         )
     )
     db_client.save_watch(watch)
-    
+
     with db_client.db.get_session() as session:
         watch_record = session.query(MedicoverWatchModel).filter_by(region=region, city="City").first()
         watch_id = watch_record.id
 
     # Should not raise or update anything if no fields are provided
     db_client.update_watch(watch_id)
-    
+
     with db_client.db.get_session() as session:
         updated = session.query(MedicoverWatchModel).filter_by(id=watch_id).first()
         assert updated.city == "City"

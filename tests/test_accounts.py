@@ -3,15 +3,13 @@
 These tests focus on the new "account" column additions to watch and appointment tables
 and related behaviors in service/database layers.
 """
-import datetime
+
 import pytest
 from sqlalchemy import text
 
 from src.medicover.watch import Watch, WatchType
 from src.medicover.appointment import Appointment
 from src.id_value_util import IdValue
-from src.database.medicover_db import MedicoverDbLogic
-from src.database import MedicoverDbClient
 from src.medicover.services.watch_service import WatchService
 
 # Reuse SQLite-based testing logic by subclassing to avoid side-effects
@@ -22,13 +20,16 @@ class DummyAPI:
     async def update_watch_metadata(self, watch):
         return
 
+
 @pytest.fixture
 def db_logic():
     return SqliteDbLogic(":memory:")
 
+
 @pytest.fixture
 def db_client():
     return SqliteDbClient(":memory:")
+
 
 @pytest.fixture
 def watch_service(db_client):
@@ -39,19 +40,19 @@ def test_watch_persists_account_alias(db_client):
     # Create a watch with an explicit account alias
     watch = Watch.from_tuple(
         (
-            0,               # id (ignored on save)
-            101,             # region id
-            "CityX",        # city
-            [9],             # specialties
-            None,            # clinic
-            None,            # doctor
-            "2025-01-01",   # start
-            "2025-12-31",   # end
-            "00:00:00-*",   # time range
-            False,           # autobook
-            None,            # exclusions
+            0,  # id (ignored on save)
+            101,  # region id
+            "CityX",  # city
+            [9],  # specialties
+            None,  # clinic
+            None,  # doctor
+            "2025-01-01",  # start
+            "2025-12-31",  # end
+            "00:00:00-*",  # time range
+            False,  # autobook
+            None,  # exclusions
             WatchType.STANDARD.value,  # type
-            "accA",         # account alias
+            "accA",  # account alias
         )
     )
     new_id = db_client.save_watch(watch)

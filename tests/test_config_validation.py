@@ -14,7 +14,7 @@ def test_parse_medicover_accounts_duplicate_alias():
 
 
 def test_parse_medicover_accounts_duplicate_username():
-    """Test that duplicate usernames raise ValueError.""" 
+    """Test that duplicate usernames raise ValueError."""
     # Same username (user1) encoded twice with different aliases
     userdata = "acc1@dXNlcjE=:cGFzczE=;acc2@dXNlcjE=:cGFzczI="
     with pytest.raises(ValueError, match="Duplicate username found: user1"):
@@ -26,7 +26,7 @@ def test_parse_medicover_accounts_duplicate_username_fallback():
     # Fallback format without @ separator - should only process first entry
     userdata = "user1:pass1;user1:pass2"
     accounts, default = parse_medicover_accounts(userdata)
-    
+
     # Should only have processed the first account
     assert len(accounts) == 1
     assert "default" in accounts
@@ -39,7 +39,7 @@ def test_parse_medicover_accounts_valid_multiple():
     # Different aliases and usernames
     userdata = "acc1@dXNlcjE=:cGFzczE=;acc2@dXNlcjI=:cGFzczI="
     accounts, default = parse_medicover_accounts(userdata)
-    
+
     assert len(accounts) == 2
     assert "acc1" in accounts
     assert "acc2" in accounts
@@ -52,7 +52,7 @@ def test_parse_medicover_accounts_fallback_ignores_additional():
     """Test that fallback format only processes first entry and ignores additional ones."""
     userdata = "user1:pass1;extra_entry;another@entry"
     accounts, default = parse_medicover_accounts(userdata)
-    
+
     # Should only process the first fallback entry
     assert len(accounts) == 1
     assert "default" in accounts
@@ -64,7 +64,7 @@ def test_parse_medicover_accounts_single_account_no_duplicates():
     """Test that single account format doesn't trigger duplicate validation."""
     userdata = "user1:pass1"
     accounts, default = parse_medicover_accounts(userdata)
-    
+
     assert len(accounts) == 1
     assert "default" in accounts
     assert accounts["default"] == ("user1", "pass1")

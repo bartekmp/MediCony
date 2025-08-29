@@ -252,5 +252,4 @@ class MediAPI:
             return {}
         return response.json()
 
-
     # NOTE: No extra delegation needed; methods above always act on self.http_client which switches with use_account().
