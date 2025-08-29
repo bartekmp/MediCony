@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.1.8 (2025-08-29)
+
+### Bug Fixes
+
+- Reformat code
+  ([`20fd59d`](https://github.com/bartekmp/MediCony/commit/20fd59d826e79a7fbbcbb1945743caa8b71dc25e))
+
+
 ## v1.1.7 (2025-08-29)
 
 ### Bug Fixes
