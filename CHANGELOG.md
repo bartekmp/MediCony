@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.1.7 (2025-08-29)
+
+### Bug Fixes
+
+- Remove debug docker push properties
+  ([`323a5a4`](https://github.com/bartekmp/MediCony/commit/323a5a427a30f1a6f65a9907b27a175202deb29a))
+
+
 ## v1.0.0 (2025-08-28)
 
 - Initial Release
