@@ -7,7 +7,7 @@ requires-python = ">=3.13"
 dependencies = [
     "pharmaradar @ https://github.com/bartekmp/pharmaradar/archive/refs/heads/main.tar.gz",
     "requests==2.32.5",
-    "beautifulsoup4==4.13.4",
+    "beautifulsoup4==4.14.2",
     "notifiers==1.3.6",
     "python-dotenv==1.1.1",
     "fake-useragent==2.2.0",
