@@ -6,6 +6,7 @@ from aiogram import Bot, Dispatcher
 from pharmaradar import MedicineWatchdog
 
 from src.bot.commands.logs import register_logs_handler
+from src.bot.commands.search_now import register_search_now_handler
 from src.bot.commands.medicine_activate import register_activate_medicine_handler
 from src.bot.commands.medicine_add import register_add_medicine_handler
 from src.bot.commands.medicine_edit import register_edit_medicine_handler
@@ -24,7 +25,10 @@ class TelegramBot:
     dp: Dispatcher
 
     def __init__(
-        self, watch_service: Optional[WatchService] = None, medicine_service: Optional[MedicineWatchdog] = None
+        self,
+        watch_service: Optional[WatchService] = None,
+        medicine_service: Optional[MedicineWatchdog] = None,
+        wake_event: Optional[asyncio.Event] = None,
     ):
         check_env_vars()
         self.bot = Bot(
@@ -33,6 +37,7 @@ class TelegramBot:
         self.dp = Dispatcher()
         self.watch_service = watch_service
         self.medicine_service = medicine_service
+        self.wake_event = wake_event
         self.register_handlers()
 
     def register_handlers(self):
@@ -43,6 +48,8 @@ class TelegramBot:
             register_add_watch_handler(self.dp, self.watch_service)
             register_remove_watch_handler(self.dp, self.watch_service)
         register_logs_handler(self.dp)
+        # Register search_now handler to trigger immediate search cycles
+        register_search_now_handler(self.dp, self.wake_event, self.watch_service, self.medicine_service)
 
         # Medicine handlers (only if medicine_service is provided)
         if self.medicine_service:

@@ -130,7 +130,7 @@ class MediCony:
         else:
             log.info("MedicineApp not initialized (command does not contain 'medicine' or is not 'start')")
 
-    async def daemon_mode(self, sleep_period_s: int, shutdown_event: asyncio.Event):
+    async def daemon_mode(self, sleep_period_s: int, shutdown_event: asyncio.Event, wake_event: asyncio.Event | None = None):
         log.info(f"Daemon mode. Sleep period: {sleep_period_s}s")
         if not self.medicover_app and not self.medicine_app:
             log.info("Neither MedicoverApp nor MedicineApp initialized, exiting daemon mode")
@@ -161,6 +161,12 @@ class MediCony:
 
             while total_slept < sleep_period_s and not shutdown_event.is_set():
                 try:
+                    # If a wake_event is provided and set, break sleep early
+                    if wake_event is not None and wake_event.is_set():
+                        log.info("Wake event received. Skipping remaining sleep and running next cycle now.")
+                        wake_event.clear()
+                        break
+
                     remaining_sleep = min(sleep_interval, sleep_period_s - total_slept)
                     await asyncio.sleep(remaining_sleep)
                     total_slept += remaining_sleep
@@ -193,16 +199,20 @@ class MediCony:
             log.info("MedicoverApp and MedicineApp must be both initialized, exiting daemon worker")
             return
 
+        # Wake event to allow external triggers (e.g., Telegram command) to skip sleep
+        wake_event = asyncio.Event()
+
         telegram_bot = TelegramBot(
             self.medicover_app.watch_service,
             self.medicine_app.medicine_service,
+            wake_event,
         )
 
         # Start two async tasks, one for the Telegram bot and one for the MediCony watchdog
         try:
             await asyncio.gather(
                 telegram_bot.dispatch_interactive_bot(shutdown_event),
-                self.daemon_mode(sleep_period_s, shutdown_event),
+                self.daemon_mode(sleep_period_s, shutdown_event, wake_event),
                 return_exceptions=True,
             )
         except Exception as e:

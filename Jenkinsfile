@@ -6,7 +6,7 @@ pipeline {
     }
 
     parameters {
-        booleanParam(name: 'DEPLOY_TO_ARGOCD', defaultValue: true, description: 'Deploy to ArgoCD after build? Set to false to skip deployment.')
+        booleanParam(name: 'TRIGGER_GITOPS_CD', defaultValue: true, description: 'Trigger GitOps CD after build? Set to false to skip deployment.')
         booleanParam(name: 'PUSH_IMAGE', defaultValue: env.BRANCH_NAME == 'main', description: 'Push Docker image after build?')
         booleanParam(name: 'SKIP_DEPLOYMENT', defaultValue: false, description: 'Skip image build and deployment steps? Useful for testing changes without deploying.')
     }
@@ -21,7 +21,7 @@ pipeline {
         DOCKER_REGISTRY = "${env.DOCKER_REGISTRY}"
         // Initialize SKIP_DEPLOYMENT from parameter, but allow runtime override
         SKIP_DEPLOYMENT_PARAM = "${params.SKIP_DEPLOYMENT.toString()}"
-        DEPLOY_TO_ARGOCD_PARAM = "${params.DEPLOY_TO_ARGOCD.toString()}"
+        TRIGGER_GITOPS_CD_PARAM = "${params.TRIGGER_GITOPS_CD.toString()}"
         GH_TOKEN = credentials('github_token')
     }
 
@@ -110,11 +110,11 @@ pipeline {
                     if (!env.SKIP_DEPLOYMENT) {
                         env.SKIP_DEPLOYMENT = env.SKIP_DEPLOYMENT_PARAM ?: 'false'
                     }
-                    if (!env.DEPLOY_TO_ARGOCD) {
-                        env.DEPLOY_TO_ARGOCD = env.DEPLOY_TO_ARGOCD_PARAM ?: 'false'
+                    if (!env.TRIGGER_GITOPS_CD) {
+                        env.TRIGGER_GITOPS_CD = env.TRIGGER_GITOPS_CD_PARAM ?: 'false'
                     }
                     echo "Initial SKIP_DEPLOYMENT value: ${env.SKIP_DEPLOYMENT}"
-                    echo "Initial DEPLOY_TO_ARGOCD value: ${env.DEPLOY_TO_ARGOCD}"
+                    echo "Initial TRIGGER_GITOPS_CD value: ${env.TRIGGER_GITOPS_CD}"
                     
                     // If parameter says to skip deployment, honor it
                     if (env.SKIP_DEPLOYMENT == 'true') {
@@ -136,15 +136,15 @@ pipeline {
                     if (exitCode == 0) {
                         echo "Branch: New version released successfully"
                         env.SKIP_DEPLOYMENT = 'false'
-                        env.DEPLOY_TO_ARGOCD = 'true'
+                        env.TRIGGER_GITOPS_CD = 'true'
                         echo "Set SKIP_DEPLOYMENT to: ${env.SKIP_DEPLOYMENT}"
-                        echo "Set DEPLOY_TO_ARGOCD to: ${env.DEPLOY_TO_ARGOCD}"
+                        echo "Set TRIGGER_GITOPS_CD to: ${env.TRIGGER_GITOPS_CD}"
                     } else if (exitCode == 2) {
                         echo "Branch: No release necessary or already released, setting SKIP_DEPLOYMENT to true"
                         env.SKIP_DEPLOYMENT = 'true'
-                        env.DEPLOY_TO_ARGOCD = 'false'
+                        env.TRIGGER_GITOPS_CD = 'false'
                         echo "Set SKIP_DEPLOYMENT to: ${env.SKIP_DEPLOYMENT}"
-                        echo "Set DEPLOY_TO_ARGOCD to: ${env.DEPLOY_TO_ARGOCD}"
+                        echo "Set TRIGGER_GITOPS_CD to: ${env.TRIGGER_GITOPS_CD}"
                     } else {
                         echo "Branch: Unexpected exit code ${exitCode}"
                         error("Semantic-release failed with exit code ${exitCode}")
@@ -256,20 +256,20 @@ pipeline {
             }
         }
 
-        stage('Deploy to Argo CD') {
+        stage('Deploy to GitOps CD') {
             when {
                 branch 'main'
             }
             steps {
                 script {
-                    if (env.DEPLOY_TO_ARGOCD == 'false') {
-                        echo "Skipping deployment to ArgoCD because DEPLOY_TO_ARGOCD = '${env.DEPLOY_TO_ARGOCD}'"
+                    if (env.TRIGGER_GITOPS_CD == 'false') {
+                        echo "Skipping deployment because TRIGGER_GITOPS_CD = '${env.TRIGGER_GITOPS_CD}'"
                         return
                     }
                     if (!env.GITOPS_REPO?.trim()) {
-                        echo 'Skipping deployment to ArgoCD because GITOPS_REPO is not set.'
-                    } else if (env.DEPLOY_TO_ARGOCD == 'true') {
-                        // Clone the GitOps repo, update image, commit, and push to trigger ArgoCD deployment
+                        echo 'Skipping deployment because GITOPS_REPO is not set.'
+                    } else if (env.TRIGGER_GITOPS_CD == 'true') {
+                        // Clone the GitOps repo, update image, commit, and push to trigger deployment
                         sh 'rm -rf gitops-tmp'
                         sh "git clone ${env.GITOPS_REPO} gitops-tmp"
                         dir('gitops-tmp/k8s/overlays/medicony') {
@@ -281,7 +281,7 @@ pipeline {
                         }
                         sh 'rm -rf gitops-tmp'
                     } else {
-                        echo 'Skipping deployment to ArgoCD as per user request.'
+                        echo 'Skipping deployment as per user request.'
                     }
                 }
             }
