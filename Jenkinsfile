@@ -190,6 +190,7 @@ pipeline {
                         sh "docker tag ${IMAGE_NAME}:${env.SEMVER} ${IMAGE_NAME}:latest"
                         echo 'Tagged Docker image as latest'
                     }
+
                     echo "Docker image built: ${IMAGE_NAME}:${env.SEMVER}"
                 }
             }
