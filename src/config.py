@@ -50,6 +50,7 @@ def parse_medicover_accounts(raw: str) -> Tuple[Dict[str, Tuple[str, str]], str]
 
     # Multi-account format; split on ';'
     seen_usernames = set()
+    first_alias: Optional[str] = None
     for idx, part in enumerate(filter(None, [p.strip() for p in raw.split(";")])):
         if "@" not in part:
             # Fallback attempt: treat as single user:pass chunk - process only the first one
@@ -76,7 +77,10 @@ def parse_medicover_accounts(raw: str) -> Tuple[Dict[str, Tuple[str, str]], str]
             raise ValueError(f"Duplicate alias found: {alias}")
         if idx == 0:
             default_alias = alias
+            first_alias = alias
         accounts[alias] = (username, password)
+
+    # In multi-account mode, do not add implicit 'default' alias to keep aliases exact
 
     return accounts, default_alias
 
@@ -117,7 +121,8 @@ class MediConyConfig:
 
         # Application settings
         log_path = os.environ.get("LOG_PATH", "log/medicony.log")
-        medicine_search_timeout_seconds = int(os.environ.get("MEDICINE_SEARCH_TIMEOUT_SEC", "120"))
+        # Use MEDICINE_SEARCH_TIMEOUT_SECONDS only (no SEC fallback)
+        medicine_search_timeout_seconds = int(os.environ.get("MEDICINE_SEARCH_TIMEOUT_SECONDS", "120"))
 
         config = cls(
             sleep_period_seconds=sleep_period_seconds,
@@ -183,6 +188,7 @@ class MediConyConfig:
             ),
             "LOG_PATH": self.log_path,
             "MEDICOVER_ACCOUNTS": ",".join(self.medicover_accounts.keys()),
+            "MEDICINE_SEARCH_TIMEOUT_SECONDS": str(self.medicine_search_timeout_seconds),
         }
 
     def get_account(self, alias: Optional[str] = None) -> Tuple[str, str]:
