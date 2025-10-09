@@ -208,15 +208,36 @@ class MediCony:
             wake_event,
         )
 
-        # Start two async tasks, one for the Telegram bot and one for the MediCony watchdog
+        # Run bot and main loop as cancellable tasks; cancel on shutdown for fast exit
+        bot_task = asyncio.create_task(telegram_bot.dispatch_interactive_bot(shutdown_event))
+        loop_task = asyncio.create_task(self.daemon_mode(sleep_period_s, shutdown_event, wake_event))
+
+        shutdown_wait = asyncio.create_task(shutdown_event.wait())
         try:
-            await asyncio.gather(
-                telegram_bot.dispatch_interactive_bot(shutdown_event),
-                self.daemon_mode(sleep_period_s, shutdown_event, wake_event),
-                return_exceptions=True,
+            # Wait until either shutdown is requested or any task finishes
+            done, pending = await asyncio.wait(
+                {bot_task, loop_task, shutdown_wait}, return_when=asyncio.FIRST_COMPLETED
             )
-        except Exception as e:
-            log.error(f"Error in daemon worker: {str(e)}")
-            raise
+
+            # If shutdown requested, cancel running tasks
+            if shutdown_wait in done:
+                for t in (bot_task, loop_task):
+                    if not t.done():
+                        t.cancel()
+            else:
+                # If any of the tasks finished (error or normal), cancel the other and stop
+                for t in (bot_task, loop_task):
+                    if not t.done():
+                        t.cancel()
+
+            # Await cancellations to settle
+            for t in (bot_task, loop_task):
+                try:
+                    await t
+                except asyncio.CancelledError:
+                    pass
         finally:
+            for t in (shutdown_wait,):
+                if not t.done():
+                    t.cancel()
             log.info("Daemon worker stopped. Cleaning up resources...")
