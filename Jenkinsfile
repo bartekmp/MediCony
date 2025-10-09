@@ -144,6 +144,15 @@ pipeline {
                         env.SKIP_DEPLOYMENT = 'true'
                         return
                     }
+
+                    // Ensure local branch is up-to-date to avoid push rejection
+                    sh """
+                        git config user.email "ci@medicony.lel"
+                        git config user.name "CI Bot"
+                        git fetch --prune --tags origin
+                        git fetch --prune origin ${env.BRANCH_NAME}
+                        git checkout -B ${env.BRANCH_NAME} origin/${env.BRANCH_NAME}
+                    """
                     
                     def exitCode = sh(
                         script: """
