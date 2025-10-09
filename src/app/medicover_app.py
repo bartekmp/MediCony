@@ -266,7 +266,12 @@ class MedicoverApp:
 
         id, appointment_to_cancel = filtered_appointments_by_id[0]
         if appointment_to_cancel.account:
-            await self.switch_account(appointment_to_cancel.account)
+            alias = (
+                appointment_to_cancel.account
+                if appointment_to_cancel.account != "default"
+                else self.config.medicover_default_account
+            )
+            await self.switch_account(alias)
         # Send a DELETE cancel request
         if self.api_client.cancel_appointment(appointment_to_cancel):
             log.info(f"Appointment with ID: {id} was successfully canceled")
@@ -342,6 +347,9 @@ class MedicoverApp:
 
             # Switch account for this watch if needed
             target_alias = watch.account or self.config.medicover_default_account
+            # Map literal 'default' from persisted watches to the configured default account alias
+            if target_alias == "default":
+                target_alias = self.config.medicover_default_account
             try:
                 await self.switch_account(target_alias)
             except Exception as e:

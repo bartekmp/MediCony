@@ -144,9 +144,9 @@ class WatchService:
         if isinstance(exclusions, dict):
             kwargs["exclusions"] = flatten_exclusions(exclusions)
 
-        # Set default account if not provided
+        # If account not provided, set to existing or default if missing
         if "account" not in kwargs:
-            kwargs["account"] = "default"
+            kwargs["account"] = existing_watch.account or "default"
 
         # Update in database
         return self.db_client.update_watch(watch_id, **kwargs)
