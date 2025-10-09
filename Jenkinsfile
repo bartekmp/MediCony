@@ -1,6 +1,11 @@
 pipeline {
     agent any
 
+    options {
+        // Avoid the implicit workspace checkout; we do a controlled checkout below
+        skipDefaultCheckout(true)
+    }
+
     triggers {
         pollSCM('* * * * *')
     }
@@ -28,24 +33,41 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                // Checkout any branch that triggers the build, ensure it has entire history
-                checkout([
-                    $class: 'GitSCM',
-                    branches: [[name: '**']],
-                    doGenerateSubmoduleConfigurations: false,
-                    extensions: [
-                        [$class: 'CloneOption', noTags: false, shallow: false, depth: 0],
-                        [$class: 'LocalBranch', localBranch: env.BRANCH_NAME]
-                    ],
-                    submoduleCfg: [],
-                    userRemoteConfigs: [[url: 'git@github.com:bartekmp/MediCony.git', credentialsId: 'github_ssh_key']]
-                ])
-                sh 'git config --global --add safe.directory $PWD'
-                sh 'git fetch --tags'
-                sh 'git fetch --all'
-                sh "git pull origin ${env.BRANCH_NAME}"
-                sh 'git describe --tags || echo "No tags found"'
-                sh 'echo "Current branch: ${BRANCH_NAME}"'
+                script {
+                    // Determine what to checkout. If Jenkins triggered a tag build or BRANCH_NAME is empty, default to 'main'.
+                    def isTagBuild = false
+                    try {
+                        // Multibranch provides TAG_NAME; otherwise we can infer by a simple pattern
+                        isTagBuild = (env.TAG_NAME?.trim()) ? true : (env.BRANCH_NAME ==~ /^v\d+\.\d+\.\d+$/)
+                    } catch (ignored) {
+                        isTagBuild = false
+                    }
+                    def branchToCheckout = (isTagBuild || !env.BRANCH_NAME?.trim()) ? 'main' : env.BRANCH_NAME
+
+                    // Fetch heads and tags so tag-based revisions are resolvable
+                    def refspec = '+refs/heads/*:refs/remotes/origin/* +refs/tags/*:refs/tags/*'
+
+                    checkout([
+                        $class: 'GitSCM',
+                        branches: [[name: "origin/${branchToCheckout}"]],
+                        doGenerateSubmoduleConfigurations: false,
+                        extensions: [
+                            [$class: 'WipeWorkspace'],
+                            [$class: 'CloneOption', noTags: false, shallow: false, depth: 0],
+                            [$class: 'LocalBranch', localBranch: branchToCheckout]
+                        ],
+                        submoduleCfg: [],
+                        userRemoteConfigs: [[
+                            url: 'git@github.com:bartekmp/MediCony.git',
+                            credentialsId: 'github_ssh_key',
+                            refspec: refspec
+                        ]]
+                    ])
+
+                    sh 'git config --global --add safe.directory $PWD'
+                    sh 'git describe --tags || echo "No tags found"'
+                    sh 'echo "Current branch: ${BRANCH_NAME}"'
+                }
             }
         }
 
