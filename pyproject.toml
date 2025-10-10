@@ -20,7 +20,7 @@ dependencies = [
     "click==8.1.8",
     "cryptography==46.0.2",
     "sqlalchemy==2.0.43",
-    "psycopg2-binary==2.9.10",
+    "psycopg2-binary==2.9.11",
 ]
 optional-dependencies = { dev = [
     "black==25.9.0",
