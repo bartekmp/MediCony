@@ -14,20 +14,21 @@ from src.parse_args import command_line_parser
 # Load environment variables
 load_dotenv()
 
-# Global shutdown event
-shutdown_event = asyncio.Event()
+def _make_signal_handler(shutdown_event: asyncio.Event):
+    """Create a signal handler that sets the provided shutdown event."""
+    def _handler(signum, frame):
+        log.info(f"Received signal {signum}. Initiating graceful shutdown...")
+        shutdown_event.set()
 
-
-def signal_handler(signum, frame):
-    """Handle shutdown signals."""
-    log.info(f"Received signal {signum}. Initiating graceful shutdown...")
-    shutdown_event.set()
+    return _handler
 
 
 async def main():
-    # Set up signal handlers for graceful shutdown
-    signal.signal(signal.SIGTERM, signal_handler)
-    signal.signal(signal.SIGINT, signal_handler)
+    # Create shutdown event inside the running loop and set up signal handlers
+    shutdown_event = asyncio.Event()
+    handler = _make_signal_handler(shutdown_event)
+    signal.signal(signal.SIGTERM, handler)
+    signal.signal(signal.SIGINT, handler)
 
     args = command_line_parser().parse_args()
     # Get centralized configuration
