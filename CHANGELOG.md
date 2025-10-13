@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.2.3 (2025-10-13)
+
+### Bug Fixes
+
+- Wrong loop evaluation
+  ([`7533c79`](https://github.com/bartekmp/MediCony/commit/7533c791f8beb2ae081f2a0d4b9496461bae54f5))
+
+
 ## v1.1.8 (2025-08-29)
 
 ### Bug Fixes
