@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.2.4 (2025-10-18)
+
+### Bug Fixes
+
+- Move wake event past the log message ([#31](https://github.com/bartekmp/MediCony/pull/31),
+  [`1530239`](https://github.com/bartekmp/MediCony/commit/1530239fce2a64a1e4bd6d14ef2d74df19689ab8))
+
+
 ## v1.2.3 (2025-10-13)
 
 ### Bug Fixes
