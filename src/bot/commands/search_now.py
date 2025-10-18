@@ -58,11 +58,11 @@ def register_search_now_handler(
 
         # Signal the daemon to skip sleep and run next cycle immediately
         try:
-            wake_event.set()
             await message.answer(
                 f"⏩ Triggering immediate search cycle. Watches: {watches_count}, medicines: {medicines_count}.")
             if message.from_user:
                 log.info(f"User {message.from_user.id} requested immediate search")
+            wake_event.set()
             log.info(f"↩ Finished command: {command_name} (wake requested)")
         except Exception as e:
             log.error(f"Failed to trigger immediate search: {e}")

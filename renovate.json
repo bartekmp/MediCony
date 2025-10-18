@@ -1,6 +1,54 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:recommended"
-  ]
+    "config:recommended",
+    "group:allNonMajor",
+    ":automergePr",
+    ":automergeMinor",
+    ":combinePatchMinorReleases",
+    ":semanticCommits",
+    ":disableDependencyDashboard",
+    "schedule:weekly"
+  ],
+
+  "labels": ["dependencies"],
+  "timezone": "Europe/Warsaw",
+  "rangeStrategy": "replace",
+  "prConcurrentLimit": 5,
+  "prCreation": "not-pending",
+
+  "packageRules": [
+    {
+      "matchManagers": ["github-actions"],
+      "enabled": true
+    },
+    {
+      "matchManagers": ["poetry"],
+      "groupName": "Python dependencies",
+      "labels": ["python"],
+      "schedule": ["every weekend"]
+    },
+    {
+      "matchManagers": ["dockerfile"],
+      "groupName": "Docker base images",
+      "labels": ["docker"],
+      "schedule": ["monthly"]
+    },
+    {
+      "matchUpdateTypes": ["minor", "patch"],
+      "automerge": true,
+      "automergeType": "branch",
+      "platformAutomerge": true
+    },
+    {
+      "matchUpdateTypes": ["major"],
+      "labels": ["major update"],
+      "prPriority": -1,
+      "automerge": false
+    }
+  ],
+
+  "ignoreDeps": ["react-scripts"],
+
+  "enabledManagers": ["poetry", "npm", "dockerfile"]
 }
