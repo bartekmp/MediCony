@@ -17,7 +17,7 @@ dependencies = [
     "aiogram==3.22.0",
     "lxml>=5.0.0",
     "apscheduler==3.11.0",
-    "click==8.1.8",
+    "click==8.3.0",
     "cryptography==46.0.3",
     "sqlalchemy==2.0.43",
     "psycopg2-binary==2.9.11",
