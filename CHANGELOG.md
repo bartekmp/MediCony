@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.2.5 (2025-11-25)
+
+### Bugfix
+
+- Python package dependencies ([#35](https://github.com/bartekmp/MediCony/pull/35),
+  [`aae7ccc`](https://github.com/bartekmp/MediCony/commit/aae7ccc04b6dc18d74837964c4fb98644e4bcc22))
+
+
 ## v1.2.4 (2025-10-18)
 
 ### Bug Fixes
