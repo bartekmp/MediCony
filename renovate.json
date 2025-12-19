@@ -1,7 +1,7 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:recommended",
+    "config: recommended",
     "group:allNonMajor",
     ":automergePr",
     ":automergeMinor",
@@ -10,45 +10,98 @@
     ":disableDependencyDashboard",
     "schedule:weekly"
   ],
-
-  "labels": ["dependencies"],
+  "labels": [
+    "dependencies"
+  ],
   "timezone": "Europe/Warsaw",
   "rangeStrategy": "replace",
   "prConcurrentLimit": 5,
-  "prCreation": "not-pending",
-
+  "prCreation": "immediate",
+  "rebaseWhen": "behind-base-branch",
+  "stopUpdatingLabel": "renovate-stop",
+  "enabledManagers": [
+    "poetry",
+    "dockerfile",
+    "github-actions"
+  ],
+  "reviewers": [
+    "bartekmp"
+  ],
+  "suppressNotifications": [
+    "prIgnoreNotification"
+  ],
+  "separateMinorPatch": false,
+  "separateMajorMinor": true,
+  "separateMultipleMajor": true,
+  "vulnerabilityAlerts": {
+    "labels": [
+      "security"
+    ],
+    "automerge": false,
+    "prPriority": 100
+  },
+  "configMigration": true,
   "packageRules": [
     {
-      "matchManagers": ["github-actions"],
-      "enabled": true
+      "matchManagers": [
+        "github-actions"
+      ],
+      "enabled": true,
+      "pinDigests": true
     },
     {
-      "matchManagers": ["poetry"],
+      "matchManagers": [
+        "poetry"
+      ],
       "groupName": "Python dependencies",
-      "labels": ["python"],
-      "schedule": ["every weekend"]
+      "labels": [
+        "python"
+      ],
+      "schedule": [
+        "every weekend"
+      ]
     },
     {
-      "matchManagers": ["dockerfile"],
+      "matchManagers": [
+        "dockerfile"
+      ],
       "groupName": "Docker base images",
-      "labels": ["docker"],
-      "schedule": ["monthly"]
+      "labels": [
+        "docker"
+      ],
+      "schedule": [
+        "monthly"
+      ],
+      "pinDigests": true
     },
     {
-      "matchUpdateTypes": ["minor", "patch"],
+      "matchDepTypes": [
+        "devDependencies"
+      ],
       "automerge": true,
-      "automergeType": "branch",
+      "automergeType": "pr",
       "platformAutomerge": true
     },
     {
-      "matchUpdateTypes": ["major"],
-      "labels": ["major update"],
-      "prPriority": -1,
-      "automerge": false
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
+      "automerge": true,
+      "automergeType": "pr",
+      "platformAutomerge": true
+    },
+    {
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "labels": [
+        "major update"
+      ],
+      "prPriority": 10,
+      "automerge": false,
+      "groupName": null,
+      "commitMessagePrefix": "BREAKING:"
     }
-  ],
-
-  "ignoreDeps": ["react-scripts"],
-
-  "enabledManagers": ["poetry", "npm", "dockerfile"]
+  ]
 }
