@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.2.6 (2025-12-19)
+
+### Enhancement
+
+- Update renovate.json configuration settings
+  ([`480533f`](https://github.com/bartekmp/MediCony/commit/480533f89b2fe40d786ef5ef8902245c038ef18d))
+
+
 ## v1.2.5 (2025-11-25)
 
 ### Bugfix
