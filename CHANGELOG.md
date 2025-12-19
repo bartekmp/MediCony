@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.2.7 (2025-12-19)
+
+### Bug Fixes
+
+- Formatting in renovate.json
+  ([`2267fbb`](https://github.com/bartekmp/MediCony/commit/2267fbba3f55c3e28bd7c40c6df6e54bf804dd5f))
+
+
 ## v1.2.6 (2025-12-19)
 
 ### Enhancement

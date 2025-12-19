@@ -1,6 +1,6 @@
 [project]
 name = "MediCony"
-version = "1.2.6"
+version = "1.2.7"
 description = "A Python package for managing medical conditions and treatments in Medicover service."
 readme = "README.md"
 requires-python = ">=3.13"
