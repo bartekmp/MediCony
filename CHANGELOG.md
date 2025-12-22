@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.2.8 (2025-12-22)
+
+### Bug Fixes
+
+- Downgrade click dependency ([#40](https://github.com/bartekmp/MediCony/pull/40),
+  [`d721312`](https://github.com/bartekmp/MediCony/commit/d7213127823d08bdc77f0b1f35cca9c25eda1db3))
+
+
 ## v1.2.7 (2025-12-19)
 
 ### Bug Fixes
