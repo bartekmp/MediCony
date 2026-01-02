@@ -1,0 +1,85 @@
+name: Release and Publish
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  IMAGE_NAME: medicony
+  REGISTRY: ghcr.io
+
+jobs:
+  release:
+    name: Release and Publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+      issues: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install .[dev]
+
+      - name: Python Semantic Release
+        id: semantic_release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          semantic-release --strict version --push
+
+      - name: Get latest tag version
+        id: get_version
+        run: |
+          git fetch --tags
+          VERSION=$(git describe --tags --abbrev=0 | sed 's/^v//')
+          echo "SEMVER=$VERSION" >> $GITHUB_ENV
+          echo "Calculated version: $VERSION"
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository }}
+          tags: |
+            type=raw,value=latest
+            type=raw,value=${{ env.SEMVER }}
+          labels: |
+            org.opencontainers.image.title=MediCony
+            org.opencontainers.image.description=A Python package for managing medical conditions and treatments in Medicover service.
+            org.opencontainers.image.version=${{ env.SEMVER }}
+            feature.branch=${{ github.ref_name }}
+            build.id=${{ github.run_id }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            VERSION=${{ env.SEMVER }}
