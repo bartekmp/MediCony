@@ -1,6 +1,6 @@
 # MediCony
 
-**Monitor your Medicover appointments and medicine availability with MediCony.** It's designed to work with the latest authentication system (as of July 2025).
+**Monitor your Medicover appointments and medicine availability with MediCony.** It's designed to work with the latest authentication system (as of January 2026).
 
 - 🔍 **Automated monitoring** of appointments and examinations availability
 - 💊 **Precise medicine search** for pharmacy availability with dosage and package filtering using [ktomalek.pl](https://ktomalek.pl)
@@ -10,6 +10,9 @@
 - 🐳 **Container-ready** for easy deployment and automation
 - ⚡ **Multiple execution modes** - one-shot searches or continuous monitoring
 - 🏗️ **Modular architecture** - separated Medicover and medicine functionality
+
+> [!IMPORTANT]
+> **Requirements**: MediCony requires a valid **Medicover account** credentials. To fully utilize the booking and appointment search features, an **active subscription** to Medicover services is highly recommended. Without a subscription, search results may be limited key features might not work as intended.
 
 ---
 
@@ -449,6 +452,33 @@ MediCony includes an interactive Telegram bot for managing watches and monitorin
 - **Chunked responses** - Long messages split automatically
 - **Suggested values** - Pre-configured defaults from `TELEGRAM_ADD_COMMAND_SUGGESTED_PROPERTIES`
 
+### Visual Guide
+
+#### Interactive Setup
+Adding a watch via `/watch_add`:
+
+![Adding a watch step 1](docs/adding_watch_1.png)
+![Adding a watch step 2](docs/adding_watch_2.png)
+
+#### Managing Items
+Listing active watches or medicines:
+
+![Listing items](docs/listing_objects.png)
+
+#### Notifications and Results
+Appointment found notification:
+
+![Appointment search result](docs/appointment_search_result.png)
+
+Medicine found notification:
+
+![Medicine search result](docs/medicine_search_result.png)
+
+#### System Monitoring
+Viewing logs via `/logs`:
+
+![Getting logs](docs/getting_logs.png)
+
 ---
 
 ## Deployment
@@ -686,6 +716,35 @@ MediCony retrieves most important data available about searched medicine and pha
 - **Smart deactivation**: Automatically deactivates medicine searches when adequate availability is found
 - **Threshold-based monitoring**: Configurable minimum availability levels (`none`, `low`, `high`)
 - **Resource optimization**: Do not search for the medicine when it's not in an active state
+
+---
+
+## Testing
+
+### End-to-End Feature Tests (`feature_test/`)
+
+The `feature_test/` directory contains fully operational End-to-End (E2E) tests that verify MediCony functionality using **real user credentials** against the live Medicover system.
+
+**What they test:**
+*   **Authentication**: Verifies login process with real credentials (`test_auth.py`).
+*   **Booking Flow**: Tests the full appointment search and booking capability (`test_booking.py`).
+*   **Medicine Finder**: Verifies connectivity with pharmacy search providers (`test_medicine_finder.py`).
+
+**How to launch:**
+These tests require a valid configuration with real credentials.
+
+1. **Configure Environment**: Ensure your `.env` file or environment variables contain valid `MEDICOVER_USERDATA`.
+2. **Run Tests**:
+   ```bash
+   # Run all feature tests
+   pytest feature_test/
+   
+   # Run specific test suite
+   pytest feature_test/test_auth.py
+   ```
+
+> [!CAUTION]
+> **Real Actions**: These tests perform **real actions** on your Medicover account, like booking and cancelling appointments (examination type only). While they aim to verify functionality safely, please monitor your account to ensure no unwanted reservations remain after testing appointment booking features.
 
 ---
 
