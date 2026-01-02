@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.4.0 (2026-01-02)
+
+### Feature
+
+- Update deployment example
+  ([`7624531`](https://github.com/bartekmp/MediCony/commit/76245319431a8c0dcbf444c2a13e472058e69cbc))
+
+
 ## v1.3.1 (2026-01-02)
 
 ### Bug Fixes
