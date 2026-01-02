@@ -1,19 +1,6 @@
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: medicony-db-pv
-spec:
-  storageClassName: manual
-  capacity:
-    storage: 1Gi
-  accessModes:
-    - ReadWriteOnce
-  hostPath:
-    path: "<your host path with db directory>"
----
-apiVersion: v1
-kind: PersistentVolume
-metadata:
   name: medicony-log-pv
 spec:
   storageClassName: manual
@@ -27,18 +14,6 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: medicony-db-pvc
-spec:
-  storageClassName: manual
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 2Gi
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
   name: medicony-log-pvc
 spec:
   storageClassName: manual
@@ -46,7 +21,7 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 2Gi
+      storage: 1Gi
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -69,8 +44,6 @@ spec:
         image: "ghcr.io/bartekmp/medicony:latest"
         args: ["start"]
         volumeMounts:
-        - name: medicony-db-storage
-          mountPath: /app/db
         - name: medicony-log-storage
           mountPath: /app/log
         resources:
@@ -92,15 +65,21 @@ spec:
         # Optional: Application settings
         - name: SLEEP_PERIOD_SEC
           value: "300"  # Check interval in seconds
-        - name: LOG_PATH
-          value: "/app/log/medicony.log"  # Log file path
         # Optional: Telegram bot defaults
         - name: TELEGRAM_ADD_COMMAND_SUGGESTED_PROPERTIES
           value: "region:123[Your region];city:Your city"  # Default values for bot
+        # Required: PostgreSQL database connection
+        - name: POSTGRES_HOST
+          value: "your-postgres-host"
+        - name: POSTGRES_PORT
+          value: "5432"
+        - name: POSTGRES_USER
+          value: "medicony"
+        - name: POSTGRES_PASSWORD
+          value: "your-password"
+        - name: POSTGRES_DATABASE
+          value: "medicony"
       volumes:
-      - name: medicony-db-storage
-        persistentVolumeClaim:
-          claimName: medicony-db-pvc
       - name: medicony-log-storage
         persistentVolumeClaim:
           claimName: medicony-log-pvc
