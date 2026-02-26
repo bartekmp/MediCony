@@ -37,8 +37,7 @@
     "labels": [
       "security"
     ],
-    "automerge": false,
-    "prPriority": 100
+    "automerge": false
   },
   "configMigration": true,
   "packageRules": [
@@ -81,6 +80,10 @@
       "automerge": true,
       "automergeType": "pr",
       "platformAutomerge": true
+    },
+    {
+      "matchUpdateTypes": ["vulnerability"],
+      "prPriority": 20
     },
     {
       "matchUpdateTypes": [
