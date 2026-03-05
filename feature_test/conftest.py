@@ -34,7 +34,7 @@ def setup_environment():
 
 
 @pytest.fixture(scope="session", autouse=True)
-def env_vars() -> dict:
+def env_vars(setup_environment) -> dict:
     vars = {}
     if user_data := os.environ.get("MEDICOVER_USERDATA"):
         # Use the same validation as the main config parser
@@ -52,7 +52,7 @@ def env_vars() -> dict:
 
 
 @pytest.fixture(scope="function")
-def skip_if_no_real_userdata():
+def skip_if_no_real_userdata(setup_environment):
     user_data = os.environ.get("MEDICOVER_USERDATA")
     if not user_data:
         pytest.skip("MEDICOVER_USERDATA environment variable is not set, skipping tests that require valid login")
