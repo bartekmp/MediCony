@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v1.5.0 (2026-03-05)
+
+### Feature
+
+- Update to new login flow and handle Medicover MFA gate
+  ([#58](https://github.com/bartekmp/MediCony/pull/58),
+  [`53028ca`](https://github.com/bartekmp/MediCony/commit/53028ca45c3f4227e53d724bd99e191476a6b462))
+
+
 ## v1.4.1 (2026-02-28)
 
 ### Bug Fixes
