@@ -1,9 +1,9 @@
 # MediCony
 
-**Monitor your Medicover appointments and medicine availability with MediCony.** It's designed to work with the latest authentication system (as of January 2026).
+**Monitor your Medicover appointments and medicine availability with MediCony.** It's designed to work with the latest authentication system (as of March 2026).
 
 - 🔍 **Automated monitoring** of appointments and examinations availability
-- 💊 **Precise medicine search** for pharmacy availability with dosage and package filtering using [ktomalek.pl](https://ktomalek.pl)
+- 💊 **Precise medicine search** for pharmacy availability with dosage and package filtering from [ktomalek.pl](https://ktomalek.pl) using [PharmaRadar](https://github.com/bartekmp/pharmaradar)
 - 📅 **Automatic booking** of available appointments when found
 - 💾 **PostgreSQL database** to track searches and prevent duplicate notifications
 - 📱 **Telegram notifications** with interactive bot commands and reservation links
@@ -13,6 +13,7 @@
 
 > [!IMPORTANT]
 > **Requirements**: MediCony requires a valid **Medicover account** credentials. To fully utilize the booking and appointment search features, an **active subscription** to Medicover services is highly recommended. Without a subscription, search results may be limited key features might not work as intended.
+> **Multi-factor Authentication**: Currently, in order to use MediCony, you need to turn off the MFA for your account, as it interrupts the automation flow of the application. I plan to add a way of sending the SMS code to the Telegram bot to salvage that in the future.
 
 ---
 
@@ -181,7 +182,7 @@ medicony book-appointment --help
 
 - **`Watch`** - A saved search configuration for continuous monitoring ([`src/medicover/watch.py`](src/medicover/watch.py))
 - **`Appointment`** - Represents a medical appointment with all its properties ([`src/medicover/appointment.py`](src/medicover/appointment.py))
-- **`Medicine`** - A saved search configuration for medicine availability ([`src/medicine/medicine.py`](src/medicine/medicine.py))
+- **`Medicine`** - A saved search configuration for medicine availability, see [PharmaRadar](https://github.com/bartekmp/pharmaradar) for more
 
 ### Available Commands
 
@@ -884,68 +885,65 @@ psql -h $POSTGRES_HOST -p $POSTGRES_PORT -U $POSTGRES_USER -d $POSTGRES_DATABASE
 
 ```
 MediCony/
-├── src/                      # Source code
-│   ├── app/                  # Application layer
-│   │   ├── medicony_app.py   # Main application coordinator
-│   │   ├── medicine_app.py   # Medicine-specific application logic
-│   │   └── medicover_app.py  # Medicover-specific application logic
-│   ├── medicover/           # Medicover appointment functionality
-│   │   ├── appointment.py    # Appointment data model
-│   │   ├── auth.py          # Medicover authentication logic
-│   │   ├── api_client.py    # Medicover API client
-│   │   ├── matchers.py      # Appointment matching logic
-│   │   ├── presenters.py    # Data presentation utilities
-│   │   ├── watch.py         # Watch functionality and data model
-│   │   └── services/        # Business logic services
-│   │       └── watch_service.py  # Watch management service
-│   ├── medicine/            # Medicine availability functionality
-│   │   ├── medicine.py      # Medicine and PharmacyInfo data models
-│   │   ├── medicine_scraper.py    # Main web scraper for ktomalek.pl
-│   │   ├── medicine_service.py    # Medicine business logic layer
-│   │   ├── scraping_utils.py      # Pharmacy extraction utilities
-│   │   ├── text_parsers.py        # Text parsing and normalization
-│   │   ├── location_selector.py   # Location selection logic
-│   │   └── webdriver_utils.py     # WebDriver management utilities
-│   ├── bot/                 # Telegram bot functionality
-│   │   ├── interactive_bot.py     # Main bot orchestrator
-│   │   ├── telegram.py           # Telegram API integration
-│   │   ├── shared_utils.py       # Common bot utilities
-│   │   ├── validation_utils.py   # Input validation helpers
-│   │   └── commands/             # Bot command handlers
-│   │       ├── watch_add.py      # Add watch command
-│   │       ├── watch_list.py     # List watches command
-│   │       ├── watch_edit.py     # Edit watch command
-│   │       ├── watch_remove.py   # Remove watch command
-│   │       ├── medicine_add.py   # Add medicine search command
-│   │       ├── medicine_list.py  # List medicine searches command
-│   │       ├── medicine_edit.py  # Edit medicine search command
-│   │       ├── medicine_remove.py    # Remove medicine search command
-│   │       ├── medicine_activate.py  # Activate/deactivate medicine searches
-│   │       └── logs.py           # View application logs command
-│   ├── config.py            # Configuration management
-│   ├── db.py               # PostgreSQL database operations using SQLAlchemy
-│   ├── logger.py           # Centralized logging utilities
-│   ├── parse_args.py       # Command line argument parsing
-│   ├── http_client.py      # HTTP client utilities
-│   └── id_value_util.py    # ID/value mapping utilities
-├── tests/                  # Unit tests
-│   ├── medicine/           # Medicine module tests
-│   ├── medicover/          # Medicover module tests
-│   └── test_*.py          # General tests
-├── feature_test/          # End-to-end integration tests
-├── scripts/               # Helper scripts for deployment
-│   ├── build_image.sh     # Docker image build script
-│   ├── debug.sh          # Debug mode script
-│   ├── execute.sh        # Execution helper
-│   └── start.sh          # Start script
-├── example_filters/       # Example filter files
-├── log/                   # Application logs storage
-├── .env.example          # Environment configuration template
-├── Dockerfile            # Container definition
-├── docker-compose.yml    # Docker Compose configuration
-├── medicony-deployment.yaml.example  # Kubernetes deployment template
-├── pyproject.toml       # Python project configuration
-└── medicony.py          # Main application entry point
+├── src/                               # Source code
+│   ├── app/                           # Application orchestration layer
+│   │   ├── medicony_app.py            # Main app coordinator
+│   │   ├── medicine_app.py            # Medicine workflow orchestration
+│   │   └── medicover_app.py           # Medicover workflow orchestration
+│   ├── bot/                           # Telegram bot functionality
+│   │   ├── interactive_bot.py         # Bot runner and handlers wiring
+│   │   ├── shared_utils.py            # Shared bot helper functions
+│   │   ├── telegram.py                # Telegram client integration
+│   │   ├── validation_utils.py        # Bot input validation
+│   │   └── commands/                  # Individual bot commands
+│   │       ├── logs.py                # Show recent logs
+│   │       ├── medicine_*.py          # Medicine commands
+│   │       ├── search_now.py          # Trigger immediate search (watch & medicine)
+│   │       └── watch_*.py             # Watch commands
+│   ├── database/                      # Database clients and persistence
+│   │   ├── base_db.py                 # Shared DB setup utilities
+│   │   ├── medicover_client.py        # Medicover DB facade
+│   │   ├── medicover_db.py            # Medicover tables operations
+│   │   ├── pharma_client.py           # Pharmacy DB facade
+│   │   └── pharma_db.py               # Pharmacy tables operations
+│   ├── medicover/                     # Medicover domain logic
+│   │   ├── api_client.py              # Medicover API wrapper
+│   │   ├── appointment.py             # Appointment entities
+│   │   ├── auth.py                    # Login and token flow
+│   │   ├── matchers.py                # Appointment filtering logic
+│   │   ├── presenters.py              # User-facing formatting helpers
+│   │   ├── watch.py                   # Watch entities and helpers
+│   │   └── services/                  # Domain services
+│   │       └── watch_service.py       # Watch service layer
+│   ├── config.py                      # Environment configuration parsing
+│   ├── http_client.py                 # Authenticated HTTP client utilities
+│   ├── id_value_util.py               # ID/name conversion helpers
+│   ├── logger.py                      # Logging setup and helpers
+│   ├── models.py                      # SQLAlchemy ORM models
+│   └── parse_args.py                  # CLI argument definitions
+├── tests/                             # Unit tests
+│   ├── medicover/                     # Medicover-focused tests
+│   ├── conftest.py                    # Shared pytest fixtures
+│   └── test_*.py                      # General unit test modules
+├── feature_test/                      # End-to-end integration tests
+│   ├── conftest.py                    # Shared E2E fixtures
+│   └── test_*.py                      # Live-flow E2E tests
+├── scripts/                           # Helper scripts
+│   ├── build_image.sh                 # Build container image
+│   ├── debug.sh                       # Run in debug mode
+│   ├── execute.sh                     # Generic script entry wrapper
+│   ├── health_check.sh                # Runtime health check
+│   ├── quick_check.sh                 # Fast local smoke check
+│   └── start.sh                       # Start app/monitoring mode
+├── docs/                              # Screenshots
+├── example_filters/                   # Example filter files
+├── log/                               # Application logs
+├── .env.example                       # Environment template
+├── Dockerfile                         # Container definition
+├── medicony-deployment.yaml.example   # Kubernetes deployment template example
+├── pyproject.toml                     # Python project configuration
+├── renovate.json                      # Renovate configuration
+└── medicony.py                        # CLI entry point
 ```
 
 ---

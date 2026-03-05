@@ -7,7 +7,7 @@ import string
 import time
 import uuid
 from dataclasses import dataclass
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, urljoin, urlparse
 
 import requests
 from bs4 import BeautifulSoup
@@ -82,6 +82,60 @@ class Authenticator:
             raise ValueError("VITE_VERSION not found in env-config.js")
         return match.group(1)
 
+    async def skip_mfa_gate(self, mfa_get_url: str) -> str | None:
+        # Skip the MFA gate page telling you to turn MFA on, which appears for some accounts for unknown reasons, even if MFA is not enabled on the account.
+        # This allows to proceed with the login and avoid getting stuck on that page.
+        # Returns the redirection URL after skipping the MFA gate, which should lead to the authorization code exchange step.
+        # If the MFA gate was not present, returns None.
+        # Note: This method should be called after a successful login and before fetching the authorization code.
+        if self.session is None:
+            raise ValueError("Session is not initialized, call login() first")
+
+        login_url = "https://login-online24.medicover.pl"
+        mfa_selection_page = await self.slack_get(f"{login_url}{mfa_get_url}", allow_redirects=False)
+        if 'formaction="/Account/MfaGate?handler=SkipMfaGate"' not in mfa_selection_page.text:
+            log.info("MFA gate not detected on the page, proceeding without skipping")
+            return None
+
+        soup = BeautifulSoup(mfa_selection_page.text, "html.parser")
+        csrf_input = soup.find("input", {"name": "__RequestVerificationToken"})
+        return_url_input = soup.find("input", {"name": "Input.ReturnUrl"})
+        skip_button = soup.find(attrs={"formaction": "/Account/MfaGate?handler=SkipMfaGate"})
+
+        if not csrf_input or not return_url_input:
+            log.log_to_file("ERROR", f"Invalid MFA page response: {mfa_selection_page.text}")
+            raise ValueError("Failed to extract MFA form fields required for skipping MFA gate")
+
+        csrf_token = csrf_input.get("value")
+        return_url = return_url_input.get("value")
+        if not csrf_token or not return_url:
+            log.log_to_file("ERROR", f"Invalid MFA page response: {mfa_selection_page.text}")
+            raise ValueError("MFA skip form fields were empty")
+
+        skip_action_url = str(skip_button.get("formaction")) if skip_button and skip_button.get("formaction") else "/Account/MfaGate?handler=SkipMfaGate"
+        skip_endpoint = urljoin(login_url, skip_action_url)
+        mfa_skip_data = {
+            "Input.ReturnUrl": return_url,
+            "__RequestVerificationToken": csrf_token,
+        }
+        mfa_skip_headers = {
+            **self.headers,
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Origin": login_url,
+            "Referer": f"{login_url}{mfa_get_url}",
+        }
+        response = self.session.post(
+            skip_endpoint,
+            data=mfa_skip_data,
+            headers=mfa_skip_headers,
+            allow_redirects=False,
+        )
+        if response.status_code != 302:
+            log.error(f"Failed to skip MFA gate, status code: {response.status_code}")
+            raise requests.RequestException(f"Failed to skip MFA gate, status code: {response.status_code}")
+
+        return response.headers.get("Location")
+
     async def login(self):
         self.session = requests.Session()
         # Generate random state, device_id, code_verifier and code_challenge for the login request
@@ -141,6 +195,7 @@ class Authenticator:
             "Input.Username": self.userdata.username,
             "Input.Password": self.userdata.password,
             "Input.Button": "login",
+            "Input.IsSimpleAccessRegulationAccepted": "true",
             "__RequestVerificationToken": csrf_token,
         }
         response = self.session.post(next_url, data=login_data, headers=self.headers, allow_redirects=False)
@@ -154,6 +209,13 @@ class Authenticator:
         if not next_url:
             log.error("'Location' header was empty after submitting the login form")
             raise requests.URLRequired("'Location' header was empty after submitting the login form")
+
+        if "MfaGate" in next_url:
+            log.info("MFA gate detected, attempting to skip it")
+            next_url = await self.skip_mfa_gate(next_url)
+            if not next_url:
+                log.error("MFA gate was detected but no redirection URL was provided after skipping it")
+                raise ValueError("MFA gate was detected but no redirection URL was provided after skipping it")
 
         # Fetch authorization code by parsing query string from the next redirection URL
         response = await self.slack_get(f"{login_url}{next_url}", allow_redirects=False)
