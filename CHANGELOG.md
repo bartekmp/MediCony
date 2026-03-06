@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v1.5.1 (2026-03-06)
+
+### Improvement
+
+- Move container image building and publishing to GHA
+  ([#59](https://github.com/bartekmp/MediCony/pull/59),
+  [`be2a36a`](https://github.com/bartekmp/MediCony/commit/be2a36a51021fc3cb86b36e08ef729bd257a4843))
+
+
 ## v1.5.0 (2026-03-05)
 
 ### Feature
