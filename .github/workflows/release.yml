@@ -7,7 +7,6 @@ on:
 
 env:
   IMAGE_NAME: medicony
-  REGISTRY: ghcr.io
 
 jobs:
   release:
@@ -44,42 +43,3 @@ jobs:
           git config user.email "github-actions@github.com"
           semantic-release --strict version --push
 
-      - name: Get latest tag version
-        id: get_version
-        run: |
-          git fetch --tags
-          VERSION=$(git describe --tags --abbrev=0 | sed 's/^v//')
-          echo "SEMVER=$VERSION" >> $GITHUB_ENV
-          echo "Calculated version: $VERSION"
-
-      - name: Log in to the Container registry
-        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ github.repository }}
-          tags: |
-            type=raw,value=latest
-            type=raw,value=${{ env.SEMVER }}
-          labels: |
-            org.opencontainers.image.title=MediCony
-            org.opencontainers.image.description=A Python package for managing medical conditions and treatments in Medicover service.
-            org.opencontainers.image.version=${{ env.SEMVER }}
-            feature.branch=${{ github.ref_name }}
-            build.id=${{ github.run_id }}
-
-      - name: Build and push Docker image
-        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
-        with:
-          context: .
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          build-args: |
-            VERSION=${{ env.SEMVER }}

@@ -2,12 +2,19 @@ name: Docker Image CI
 
 on:
   pull_request:
+  workflow_run:
+    workflows: ["Release and Publish"]
+    types:
+      - completed
+  workflow_dispatch:
 
 env:
   IMAGE_NAME: medicony
+  REGISTRY: ghcr.io
 
 jobs:
   build-for-pr-verification:
+    if: github.event_name == 'pull_request'
     permissions:
       packages: write
       contents: read
@@ -20,18 +27,67 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.head_ref }}
 
-      # Semantic release versioning is handled in Jenkins
-      # Image pushing is handled by Jenkins for production builds
-      # This workflow only builds images for verification in PRs
-
       - name: Get version from latest tag
         id: get_version
         run: |
+          git fetch --tags
           VERSION=$(git describe --tags --abbrev=0 | sed 's/^v//')
           echo "SEMVER=$VERSION" >> $GITHUB_ENV
           echo "Calculated version: $VERSION"
 
-      # Build Docker image for verification purposes in pull requests
-      # Production images are built and pushed by Jenkins
       - name: Build the Docker image for PR verification
         run: docker build . --file Dockerfile --build-arg VERSION=${{ env.SEMVER }} --tag $IMAGE_NAME:$SEMVER --label "runnumber=${GITHUB_RUN_ID}" --label "pr=${GITHUB_HEAD_REF}"
+
+  build-and-push-ghcr:
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')
+    permissions:
+      packages: write
+      contents: read
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 0
+          ref: main
+
+      - name: Get version from latest tag
+        id: get_version
+        run: |
+          git fetch --tags
+          VERSION=$(git describe --tags --abbrev=0 | sed 's/^v//')
+          echo "SEMVER=$VERSION" >> $GITHUB_ENV
+          echo "Calculated version: $VERSION"
+
+      - name: Log in to GHCR
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest
+            type=raw,value=${{ env.SEMVER }}
+          labels: |
+            org.opencontainers.image.title=MediCony
+            org.opencontainers.image.description=A Python package for managing medical conditions and treatments in Medicover service.
+            org.opencontainers.image.version=${{ env.SEMVER }}
+            feature.branch=main
+            build.id=${{ github.run_id }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            VERSION=${{ env.SEMVER }}

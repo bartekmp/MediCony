@@ -7,27 +7,35 @@ pipeline {
     }
 
     triggers {
-        pollSCM('* * * * *')
+        GenericTrigger(
+            genericVariables: [
+                [key: 'WEBHOOK_ACTION', value: '$.action'],
+                [key: 'WEBHOOK_HEAD_BRANCH', value: '$.workflow_run.head_branch'],
+                [key: 'WEBHOOK_CONCLUSION', value: '$.workflow_run.conclusion'],
+                [key: 'WEBHOOK_WORKFLOW_NAME', value: '$.workflow_run.name']
+            ],
+            causeString: 'Triggered by GitHub Actions $WEBHOOK_WORKFLOW_NAME on $WEBHOOK_HEAD_BRANCH ($WEBHOOK_CONCLUSION)',
+            tokenCredentialId: 'medicony-smee-webhook-token',
+            printContributedVariables: true,
+            printPostContent: false,
+            regexpFilterText: '$WEBHOOK_ACTION $WEBHOOK_HEAD_BRANCH $WEBHOOK_CONCLUSION $WEBHOOK_WORKFLOW_NAME',
+            regexpFilterExpression: '^completed main success Docker Image CI$'
+        )
     }
 
     parameters {
         booleanParam(name: 'TRIGGER_GITOPS_CD', defaultValue: true, description: 'Trigger GitOps CD after build? Set to false to skip deployment.')
-        booleanParam(name: 'PUSH_IMAGE', defaultValue: env.BRANCH_NAME == 'main', description: 'Push Docker image after build?')
-        booleanParam(name: 'SKIP_DEPLOYMENT', defaultValue: false, description: 'Skip image build and deployment steps? Useful for testing changes without deploying.')
     }
 
     environment {
         PROJECT_NAME = 'medicony'
         IMAGE_NAME = "${env.PROJECT_NAME}"
-        SAFE_BRANCH_NAME = "${env.BRANCH_NAME.replaceAll('/', '-')}"
+        SAFE_BRANCH_NAME = "${(env.BRANCH_NAME ?: 'main').replaceAll('/', '-')}"
         BUILD_NAME = "${SAFE_BRANCH_NAME}_${env.BUILD_ID}"
         VENV_DIR = "venv_${env.BUILD_NAME}"
         GITOPS_REPO = "${env.MEDICONY_GITOPS_REPO}"
-        DOCKER_REGISTRY = "${env.DOCKER_REGISTRY}"
-        // Initialize SKIP_DEPLOYMENT from parameter, but allow runtime override
-        SKIP_DEPLOYMENT_PARAM = "${params.SKIP_DEPLOYMENT.toString()}"
         TRIGGER_GITOPS_CD_PARAM = "${params.TRIGGER_GITOPS_CD.toString()}"
-        GH_TOKEN = credentials('github_token')
+        GHCR_IMAGE = 'ghcr.io/bartekmp/medicony'
     }
 
     stages {
@@ -36,13 +44,14 @@ pipeline {
                 script {
                     // Determine what to checkout. If Jenkins triggered a tag build or BRANCH_NAME is empty, default to 'main'.
                     def isTagBuild = false
+                    def webhookBranch = env.WEBHOOK_HEAD_BRANCH?.trim()
                     try {
                         // Multibranch provides TAG_NAME; otherwise we can infer by a simple pattern
                         isTagBuild = (env.TAG_NAME?.trim()) ? true : (env.BRANCH_NAME ==~ /^v\d+\.\d+\.\d+$/)
                     } catch (ignored) {
                         isTagBuild = false
                     }
-                    def branchToCheckout = (isTagBuild || !env.BRANCH_NAME?.trim()) ? 'main' : env.BRANCH_NAME
+                    def branchToCheckout = webhookBranch ?: ((isTagBuild || !env.BRANCH_NAME?.trim()) ? 'main' : env.BRANCH_NAME)
 
                     // Fetch heads and tags so tag-based revisions are resolvable
                     def refspec = '+refs/heads/*:refs/remotes/origin/* +refs/tags/*:refs/tags/*'
@@ -67,6 +76,7 @@ pipeline {
                     sh 'git config --global --add safe.directory $PWD'
                     sh 'git describe --tags || echo "No tags found"'
                     sh 'echo "Current branch: ${BRANCH_NAME}"'
+                    sh 'echo "Webhook branch: ${WEBHOOK_HEAD_BRANCH}"'
                 }
             }
         }
@@ -118,172 +128,31 @@ pipeline {
             }
         }
 
-        stage('Tag new version with semantic-release') {
-            when {
-                allOf {
-                    branch 'main'
-                    not { buildingTag() }
-                }
-            }
-            steps {
-                echo 'Running semantic-release...'
-                script {
-                    // Initialize SKIP_DEPLOYMENT if not set
-                    if (!env.SKIP_DEPLOYMENT) {
-                        env.SKIP_DEPLOYMENT = env.SKIP_DEPLOYMENT_PARAM ?: 'false'
-                    }
-                    if (!env.TRIGGER_GITOPS_CD) {
-                        env.TRIGGER_GITOPS_CD = env.TRIGGER_GITOPS_CD_PARAM ?: 'false'
-                    }
-                    echo "Initial SKIP_DEPLOYMENT value: ${env.SKIP_DEPLOYMENT}"
-                    echo "Initial TRIGGER_GITOPS_CD value: ${env.TRIGGER_GITOPS_CD}"
-                    
-                    // If parameter says to skip deployment, honor it
-                    if (env.SKIP_DEPLOYMENT == 'true') {
-                        echo "SKIP_DEPLOYMENT parameter is true, skipping semantic-release and deployment"
-                        env.SKIP_DEPLOYMENT = 'true'
-                        return
-                    }
-
-                    // Ensure local branch is up-to-date to avoid push rejection
-                    sh """
-                        git config user.email "ci@medicony.lel"
-                        git config user.name "CI Bot"
-                        git fetch --prune --tags origin
-                        git fetch --prune origin ${env.BRANCH_NAME}
-                        git checkout -B ${env.BRANCH_NAME} origin/${env.BRANCH_NAME}
-                    """
-                    
-                    def exitCode = sh(
-                        script: """
-                            . ${env.VENV_DIR}/bin/activate
-                            semantic-release --strict version --push
-                        """,
-                        returnStatus: true
-                    )
-
-                    echo "Semantic-release exit code: ${exitCode}"
-
-                    if (exitCode == 0) {
-                        echo "Branch: New version released successfully"
-                        env.SKIP_DEPLOYMENT = 'false'
-                        env.TRIGGER_GITOPS_CD = 'true'
-                        echo "Set SKIP_DEPLOYMENT to: ${env.SKIP_DEPLOYMENT}"
-                        echo "Set TRIGGER_GITOPS_CD to: ${env.TRIGGER_GITOPS_CD}"
-                    } else if (exitCode == 2) {
-                        echo "Branch: No release necessary or already released, setting SKIP_DEPLOYMENT to true"
-                        env.SKIP_DEPLOYMENT = 'true'
-                        env.TRIGGER_GITOPS_CD = 'false'
-                        echo "Set SKIP_DEPLOYMENT to: ${env.SKIP_DEPLOYMENT}"
-                        echo "Set TRIGGER_GITOPS_CD to: ${env.TRIGGER_GITOPS_CD}"
-                    } else {
-                        echo "Branch: Unexpected exit code ${exitCode}"
-                        error("Semantic-release failed with exit code ${exitCode}")
-                    }
-                }
-            }
-        }
-
         stage('Get version from latest tag') {
             when {
                 branch 'main'
             }
             steps {
                 script {
-                    if (env.SKIP_DEPLOYMENT == 'true') {
-                        echo "Skipping version retrieval because SKIP_DEPLOYMENT = '${env.SKIP_DEPLOYMENT}'"
-                        return
-                    }
+                    sh 'git fetch --prune --tags origin'
 
                     env.SEMVER = sh(
                         script: "git describe --tags --abbrev=0 | sed 's/^v//'",
                         returnStdout: true
                     ).trim()
-                    echo "Calculated version: ${env.SEMVER}"
+                    echo "Latest version: ${env.SEMVER}"
                 }
             }
         }
 
-        stage('Build Docker image') {
+        stage('Build Docker image (verification only)') {
             steps {
                 script {
-                    if (env.SKIP_DEPLOYMENT == 'true') {
-                        echo "Skipping Docker image build because SKIP_DEPLOYMENT = '${env.SKIP_DEPLOYMENT}'"
-                        return
-                    }
-
-                    echo 'Building Docker image...'
                     def versionTag = env.BRANCH_NAME == 'main' ? env.SEMVER : '999.0.0-dev'
+                    echo "Building Docker image for verification: ${IMAGE_NAME}:${versionTag}"
                     sh """
                         docker build -t ${IMAGE_NAME}:${versionTag} . --build-arg VERSION=${versionTag} --label="branch=${env.SAFE_BRANCH_NAME}" --label="build_id=${env.BUILD_ID}" --label="version=${versionTag}"
                     """
-                    if (env.BRANCH_NAME == 'main') {
-                        sh "docker tag ${IMAGE_NAME}:${env.SEMVER} ${IMAGE_NAME}:latest"
-                        echo 'Tagged Docker image as latest'
-                    }
-
-                    echo "Docker image built: ${IMAGE_NAME}:${env.SEMVER}"
-                }
-            }
-        }
-
-        stage('Push Docker image to local registry') {
-            when {
-                expression { params.PUSH_IMAGE && env.DOCKER_REGISTRY }
-            }
-            steps {
-                script {
-                    if (env.SKIP_DEPLOYMENT == 'true') {
-                        echo "Skipping Docker push to local registry because SKIP_DEPLOYMENT = '${env.SKIP_DEPLOYMENT}'"
-                        return
-                    }
-
-                    echo 'Pushing Docker image to local registry...'
-                    def versionTag = env.BRANCH_NAME == 'main' ? env.SEMVER : '999.0.0-dev'
-
-                    // Enhanced push with retry logic and better timeouts
-                    sh """
-                        docker tag ${IMAGE_NAME}:${versionTag} ${env.DOCKER_REGISTRY}/${IMAGE_NAME}:${versionTag}
-                        docker push ${env.DOCKER_REGISTRY}/${IMAGE_NAME}:${versionTag}
-                    """
-                    if (env.BRANCH_NAME == 'main') {
-                        sh """
-                            docker tag ${IMAGE_NAME}:latest ${env.DOCKER_REGISTRY}/${IMAGE_NAME}:latest
-                            docker push ${env.DOCKER_REGISTRY}/${IMAGE_NAME}:latest
-                        """
-                    }
-                }
-            }
-        }
-
-        stage('Push Docker image to GitHub') {
-            when {
-                branch 'main'
-            }
-            steps {
-                script {
-                    if (env.SKIP_DEPLOYMENT == 'true') {
-                        echo "Skipping Docker push to GitHub because SKIP_DEPLOYMENT = '${env.SKIP_DEPLOYMENT}'"
-                        return
-                    }
-
-                    echo 'Pushing Docker image to GitHub Container Registry...'
-                    def githubRepo = sh(script: "git config --get remote.origin.url | sed 's/.*github.com[\\/:]\\([^\\/]*\\)\\/\\([^\\/\\.]*\\).*/\\1/g'", returnStdout: true).trim().toLowerCase()
-
-                    // Login to GitHub Container Registry using withCredentials
-                    withCredentials([string(credentialsId: 'github_token', variable: 'TOKEN'), 
-                                    string(credentialsId: 'github-user', variable: 'USERNAME')]) {
-                        sh 'echo $TOKEN | docker login ghcr.io -u $USERNAME --password-stdin'
-                    }
-
-                    // Push to GitHub Container Registry
-                    sh """
-                        docker tag ${IMAGE_NAME}:${env.SEMVER} ghcr.io/${githubRepo}/${IMAGE_NAME}:latest
-                        docker tag ${IMAGE_NAME}:${env.SEMVER} ghcr.io/${githubRepo}/${IMAGE_NAME}:${env.SEMVER}
-                        docker push ghcr.io/${githubRepo}/${IMAGE_NAME}:latest
-                        docker push ghcr.io/${githubRepo}/${IMAGE_NAME}:${env.SEMVER}
-                    """
-                    echo "Pushed to GitHub Container Registry: ghcr.io/${githubRepo}/${IMAGE_NAME}:${env.SEMVER}"
                 }
             }
         }
@@ -294,6 +163,20 @@ pipeline {
             }
             steps {
                 script {
+                    def webhookTriggered = false
+                    try {
+                        webhookTriggered = currentBuild.rawBuild.getCause(org.jenkinsci.plugins.gwt.GenericCause) != null
+                    } catch (ignored) {
+                        webhookTriggered = false
+                    }
+
+                    if (webhookTriggered) {
+                        env.TRIGGER_GITOPS_CD = 'true'
+                        echo 'Webhook-triggered build detected, forcing TRIGGER_GITOPS_CD=true'
+                    } else if (!env.TRIGGER_GITOPS_CD) {
+                        env.TRIGGER_GITOPS_CD = env.TRIGGER_GITOPS_CD_PARAM ?: 'false'
+                    }
+
                     if (env.TRIGGER_GITOPS_CD == 'false') {
                         echo "Skipping deployment because TRIGGER_GITOPS_CD = '${env.TRIGGER_GITOPS_CD}'"
                         return
@@ -305,7 +188,7 @@ pipeline {
                         sh 'rm -rf gitops-tmp'
                         sh "git clone ${env.GITOPS_REPO} gitops-tmp"
                         dir('gitops-tmp/k8s/overlays/medicony') {
-                            sh "kustomize edit set image ${env.DOCKER_REGISTRY}/${IMAGE_NAME}=${env.DOCKER_REGISTRY}/${IMAGE_NAME}:${env.SEMVER}"
+                            sh "kustomize edit set image ${env.GHCR_IMAGE}=${env.GHCR_IMAGE}:${env.SEMVER}"
                             sh 'git config user.email "ci@medicony.lel"'
                             sh 'git config user.name "CI Bot"'
                             sh "git commit -am \"Update image to ${env.SEMVER}\" || echo \"No changes to commit\""
@@ -326,17 +209,6 @@ pipeline {
             script {
                 def versionTag = env.BRANCH_NAME == 'main' ? env.SEMVER : '999.0.0-dev'
                 sh "docker rmi ${IMAGE_NAME}:${versionTag} || true"
-                sh "docker rmi ${IMAGE_NAME}:latest || true"
-
-                // Clean up GitHub tags if we pushed to GitHub
-                if (env.BRANCH_NAME == 'main') {
-                    def githubRepo = sh(script: "git config --get remote.origin.url | sed 's/.*github.com[\\/:]\\([^\\/]*\\)\\/\\([^\\/\\.]*\\).*/\\1/g'", returnStdout: true).trim().toLowerCase()
-                    sh "docker rmi ghcr.io/${githubRepo}/${IMAGE_NAME}:${versionTag} || true"
-                    sh "docker rmi ghcr.io/${githubRepo}/${IMAGE_NAME}:latest || true"
-
-                    sh "docker rmi registry.local/${IMAGE_NAME}:${versionTag} || true"
-                    sh "docker rmi registry.local/${IMAGE_NAME}:latest || true"
-                }
             }
         }
     }
