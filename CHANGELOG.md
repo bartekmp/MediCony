@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.5.2 (2026-03-10)
+
+### Bug Fixes
+
+- Remove explicit click dependency
+  ([`ab61a1e`](https://github.com/bartekmp/MediCony/commit/ab61a1ec5c989f8fc1801073e6005e0e21265a19))
+
+
 ## v1.5.1 (2026-03-06)
 
 ### Improvement
