@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.5.4 (2026-03-14)
+
+### Bug Fixes
+
+- **deps**: Update dependency black to v26.3.0 ([#64](https://github.com/bartekmp/MediCony/pull/64),
+  [`feceefd`](https://github.com/bartekmp/MediCony/commit/feceefd36686ef21c8ac7622cf2166cc08de42cb))
+
+
 ## v1.5.3 (2026-03-10)
 
 ### Bug Fixes
