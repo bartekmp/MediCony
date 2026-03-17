@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v1.5.5 (2026-03-17)
+
+### Bug Fixes
+
+- The condition of medicine finding feature test
+  ([#67](https://github.com/bartekmp/MediCony/pull/67),
+  [`3203f62`](https://github.com/bartekmp/MediCony/commit/3203f62604664cd2a1995d9258e5cf4730a952a9))
+
+
 ## v1.5.4 (2026-03-14)
 
 ### Bug Fixes
