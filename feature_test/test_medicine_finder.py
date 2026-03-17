@@ -55,26 +55,17 @@ def test_medicine_search_euthyrox():
     try:
         connected = finder.test_connection()
         log.info(f"Connection test: {'✅ PASSED' if connected else '❌ FAILED'}")
-    except Exception as e:
-        # In containerized environments, WebDriver may fail due to restrictions
-        # This is expected and we should skip the test
-        error_msg = str(e)
-        if any(
-            keyword in error_msg.lower()
-            for keyword in [
-                "user data directory",
-                "preferences",
-                "session not created",
-                "webdriver",
-                "chrome",
-                "sandboxing",
-            ]
+    except RuntimeError as e:
+        # Only skip if chromedriver is not installed at all on this machine.
+        # Any other failure (display issues, sandboxing, etc.) should surface as a real error.
+        import os
+
+        chromedriver_path = os.environ.get("CHROMEDRIVER_PATH", "/usr/bin/chromedriver")
+        if not os.path.exists(chromedriver_path) and not any(
+            os.path.exists(p) for p in ["/usr/bin/chromium-browser", "/usr/bin/chromium", "/usr/bin/google-chrome"]
         ):
-            log.warning(f"WebDriver failed in containerized environment: {e}")
-            pytest.skip("WebDriver cannot initialize in this environment (expected in containers)")
-        else:
-            # Unexpected error, re-raise
-            raise
+            pytest.skip("ChromeDriver / Chromium not installed on this system")
+        raise
 
     if not connected:
         log.error("Cannot connect to ktomalek.pl, aborting test")

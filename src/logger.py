@@ -31,7 +31,7 @@ class Logger:
             log_file, when="midnight", interval=1, backupCount=7, encoding="utf-8"
         )
         self.file_handler.setFormatter(self.formatter)
-        self.file_handler.setLevel(logging.DEBUG)
+        self.file_handler.setLevel(logging.INFO)
 
         # Console handler
         self.console_handler = logging.StreamHandler(sys.stdout)
@@ -95,7 +95,7 @@ class Logger:
             log_path, when="midnight", interval=1, backupCount=7, encoding="utf-8"
         )
         self.file_handler.setFormatter(self.formatter)
-        self.file_handler.setLevel(logging.DEBUG)
+        self.file_handler.setLevel(logging.INFO)
         self.logger.addHandler(self.file_handler)
 
 
