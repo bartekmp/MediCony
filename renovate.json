@@ -47,7 +47,8 @@
         "github-actions"
       ],
       "enabled": true,
-      "pinDigests": true
+      "pinDigests": true,
+      "commitMessagePrefix": "ci:"
     },
     {
       "matchManagers": [
@@ -75,15 +76,9 @@
       "pinDigests": true
     },
     {
-      "matchDepTypes": [
-        "devDependencies"
+      "matchUpdateTypes": [
+        "vulnerability"
       ],
-      "automerge": true,
-      "automergeType": "pr",
-      "platformAutomerge": true
-    },
-    {
-      "matchUpdateTypes": ["vulnerability"],
       "prPriority": 20
     },
     {
@@ -105,7 +100,7 @@
       "prPriority": 10,
       "automerge": false,
       "groupName": null,
-      "commitMessagePrefix": "BREAKING:"
+      "commitMessagePrefix": "feat!:"
     }
   ]
 }
