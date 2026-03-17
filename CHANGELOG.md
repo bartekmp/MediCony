@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.5.6 (2026-03-17)
+
+### Enhancement
+
+- Renovate config ([#68](https://github.com/bartekmp/MediCony/pull/68),
+  [`c6644dd`](https://github.com/bartekmp/MediCony/commit/c6644dd262583571ad1f5ec2e490df9be66de40d))
+
+
 ## v1.5.5 (2026-03-17)
 
 ### Bug Fixes
