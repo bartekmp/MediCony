@@ -14,7 +14,27 @@ from pharmaradar.text_parsers import MedicineNameMatcher
 log = logging.getLogger(__name__)
 
 
-def test_medicine_search_euthyrox():
+# Test data for parametrizing the search test
+MEDICINES_TO_TEST = [
+    Medicine(
+        name="Euthyrox N 50",
+        dosage="50 mcg",
+        location="Warszawa, Aleja Stanów Zjednoczonych 72",
+        radius_km=10.0,
+        min_availability=AvailabilityLevel.LOW,
+    ),
+    Medicine(
+        name="Mounjaro",
+        dosage="7,5 mg",
+        location="Warszawa, Aleja Stanów Zjednoczonych 72",
+        radius_km=10.0,
+        min_availability=AvailabilityLevel.LOW,
+    ),
+]
+
+
+@pytest.mark.parametrize("medicine", MEDICINES_TO_TEST, ids=lambda m: f"{m.name}-{m.location}")
+def test_medicine_search(medicine: Medicine):
     """
     End-to-end infrastructure test for medicine search functionality.
 
@@ -32,19 +52,10 @@ def test_medicine_search_euthyrox():
     This is expected and the test will be skipped in such cases.
     """
     log.info("=" * 80)
-    log.info("MEDICINE FEATURE TEST: Euthyrox N 50 in Warsaw")
+    log.info(f"MEDICINE FEATURE TEST: {medicine.name} near {medicine.location}")
     log.info("=" * 80)
 
-    # Setup
-    medicine = Medicine(
-        name="Euthyrox N 50",
-        dosage="50 mcg",
-        location="Warszawa",
-        radius_km=10.0,
-        min_availability=AvailabilityLevel.LOW,
-    )
-
-    log.info(f"Testing medicine search for: {medicine.full_name} in {medicine.location}")
+    log.info(f"Testing medicine search for: {medicine.full_name} near {medicine.location}")
 
     # Create finder
     log.info("Creating medicine finder...")
@@ -55,7 +66,7 @@ def test_medicine_search_euthyrox():
     try:
         connected = finder.test_connection()
         log.info(f"Connection test: {'✅ PASSED' if connected else '❌ FAILED'}")
-    except RuntimeError as e:
+    except RuntimeError:
         # Only skip if chromedriver is not installed at all on this machine.
         # Any other failure (display issues, sandboxing, etc.) should surface as a real error.
         import os
@@ -72,7 +83,7 @@ def test_medicine_search_euthyrox():
         pytest.skip("Cannot connect to ktomalek.pl")
 
     # Search for medicine
-    log.info(f"Searching for {medicine.full_name} in {medicine.location}...")
+    log.info(f"Searching for {medicine.full_name} near {medicine.location}...")
     pharmacies = finder.search_medicine(medicine)
 
     # Log results
@@ -134,9 +145,15 @@ def test_fuzzy_medicine_matching():
         ("Euthyrox N 50", "euthyrox n 50", True, "lowercase"),
         ("Euthyrox N 50", "Euthyrox N 50", True, "exact match"),
         ("Euthyrox N 50", "Euthyrox N 50 mg", True, "with mg suffix"),
+        ("Euthyrox N 50", "Euthyrox N 50mg", True, "with mg suffix without space"),
+        ("Euthyrox N 50", "Euthyrox 50mg", True, "not full name, with mg suffix without space"),
+        ("Euthyrox N 50", "Euthyrox 50", True, "not full name, without mg suffix"),
         ("Euthyrox N 50", "Letrox 50", False, "different medicine"),
         ("Apap", "APAP Extra", True, "partial match"),
         ("Aspirin", "Aspirin C", True, "with suffix"),
+        ("Euthyrox N 50", "Eutyrox N 50", True, "minor typo"),
+        ("Euthyrox N 50", "Lek Euthyrox N 50", True, "extra prefix word"),
+        ("Euthyrox N 50", "Euthyrox N 50 100 tabl.", True, "with amount suffix"),
     ]
 
     log.info("Testing fuzzy matching cases:")
