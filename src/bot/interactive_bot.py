@@ -41,15 +41,14 @@ class TelegramBot:
         self.register_handlers()
 
     def register_handlers(self):
+        register_logs_handler(self.dp)
+
         # Watch handlers (only if watch_service is provided)
         if self.watch_service:
             register_edit_watch_handler(self.dp, self.watch_service)
             register_watches_handler(self.dp, self.watch_service)
             register_add_watch_handler(self.dp, self.watch_service)
             register_remove_watch_handler(self.dp, self.watch_service)
-        register_logs_handler(self.dp)
-        # Register search_now handler to trigger immediate search cycles
-        register_search_now_handler(self.dp, self.wake_event, self.watch_service, self.medicine_service)
 
         # Medicine handlers (only if medicine_service is provided)
         if self.medicine_service:
@@ -58,6 +57,9 @@ class TelegramBot:
             register_remove_medicine_handler(self.dp, self.medicine_service)
             register_edit_medicine_handler(self.dp, self.medicine_service)
             register_activate_medicine_handler(self.dp, self.medicine_service)
+
+        # Register search_now handler to trigger immediate search cycles
+        register_search_now_handler(self.dp, self.wake_event, self.watch_service, self.medicine_service)
 
     async def dispatch_interactive_bot(self, shutdown_event: asyncio.Event):
         """Start the Telegram bot with graceful shutdown support."""

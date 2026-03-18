@@ -49,10 +49,12 @@ def format_code_element(code: str) -> str:
 
 
 def create_message_batches(formatted_message: str, elements: list[Appointment] | list[Watch]) -> list[str]:
-    calculate_message_batches_count = lambda message: ((len(message) - 1) // MAX_MESSAGE_LENGTH) + 1
+    def calculate_message_batches_count(message: str) -> int:
+        return ((len(message) - 1) // MAX_MESSAGE_LENGTH) + 1
+
     elements_batches = [
         format_single_text_element(split_elements)
-        for split_elements in np.array_split(elements, calculate_message_batches_count(formatted_message))  # type: ignore
+        for split_elements in np.array_split(elements, calculate_message_batches_count(formatted_message))
     ]
     return elements_batches
 
