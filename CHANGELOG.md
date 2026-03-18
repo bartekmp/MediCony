@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.5.7 (2026-03-18)
+
+### Enhancement
+
+- Reorganize code, update feature test ([#69](https://github.com/bartekmp/MediCony/pull/69),
+  [`52ac833`](https://github.com/bartekmp/MediCony/commit/52ac833efdcfc6c519da03dd2652a68e20424243))
+
+
 ## v1.5.6 (2026-03-17)
 
 ### Enhancement
