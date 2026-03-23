@@ -68,9 +68,12 @@ class MedicoverDbClient:
         for appointment in appointments:
             # Check if appointment in the local database
             if not self.db.appointment_exists(appointment):
-                # If not, append it to the return list and add it to the local database
+                # If not, append it to the return list
                 new_appointments.append(appointment)
-                self.db.add_appointment_history(appointment)
+
+        # Batch insert all new appointments with a single commit to reduce WAL IO
+        if new_appointments:
+            self.db.add_appointment_histories(new_appointments)
 
         return new_appointments
 
