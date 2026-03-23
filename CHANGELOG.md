@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v2.0.1 (2026-03-23)
+
+### Bug Fixes
+
+- Save appointment history entries in a single batch
+  ([#72](https://github.com/bartekmp/MediCony/pull/72),
+  [`0c7a47b`](https://github.com/bartekmp/MediCony/commit/0c7a47bdc529544a70072b6cd7f0065e96742488))
+
+
 ## v2.0.0 (2026-03-23)
 
 ### Features
