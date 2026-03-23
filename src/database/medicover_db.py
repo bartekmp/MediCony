@@ -111,6 +111,29 @@ class MedicoverDbLogic(BaseDbLogic):
                 log.error(f"Error adding appointment: {e}")
                 raise
 
+    def add_appointment_histories(self, appointments: List[MedicoverAppointment]):
+        """Add multiple appointments to the database in a single transaction."""
+        if not appointments:
+            return
+        with self._lock:
+            try:
+                with self.get_session() as session:
+                    for appointment in appointments:
+                        new_appointment = MedicoverAppointmentModel(
+                            clinic=appointment.clinic.id,
+                            doctor=appointment.doctor.id,
+                            date=appointment.date_time,
+                            specialty=appointment.specialty.id,
+                            visitType=appointment.visit_type,
+                            bookingString=appointment.booking_string,
+                            account=appointment.account,
+                        )
+                        session.add(new_appointment)
+                    session.commit()
+            except SQLAlchemyError as e:
+                log.error(f"Error adding multiple appointments: {e}")
+                raise
+
     def update_appointment(self, appointment: MedicoverAppointment):
         """Update an existing appointment in the database."""
         with self._lock:
