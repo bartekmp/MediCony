@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v2.0.0 (2026-03-23)
+
+### Features
+
+- Update docker/metadata-action action to v6 ([#71](https://github.com/bartekmp/MediCony/pull/71),
+  [`2d0dd2f`](https://github.com/bartekmp/MediCony/commit/2d0dd2f3dcb97fc00fc3d2d3c47889a11093e7c6))
+
+
 ## v1.5.8 (2026-03-21)
 
 ### Bug Fixes
