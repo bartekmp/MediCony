@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v2.1.0 (2026-03-29)
+
+### Features
+
+- **auth**: Implement interactive MFA (2FA) verification flow
+  ([#74](https://github.com/bartekmp/MediCony/pull/74),
+  [`e6a7d3d`](https://github.com/bartekmp/MediCony/commit/e6a7d3d36fbd9e0fd0666206cc78f18d5c1f4093))
+
+
 ## v2.0.1 (2026-03-23)
 
 ### Bug Fixes
