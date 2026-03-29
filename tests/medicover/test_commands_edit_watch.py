@@ -11,7 +11,11 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from src.bot.commands.watch_edit import EditWatchStates, escape_markdown, register_edit_watch_handler
+from src.bot.commands.watch_edit import (
+    EditWatchStates,
+    escape_markdown,
+    register_edit_watch_handler,
+)
 from src.id_value_util import IdValue
 from src.medicover.watch import WatchTimeRange
 
@@ -215,9 +219,18 @@ def test_get_changed_fields_basic():
     """Test that changed fields are correctly identified in basic cases."""
     # Arrange
     old = DummyWatch(
-        1, city="A", clinic=DummyIdValue(10), start_date=datetime.date.fromisoformat("2024-01-01"), auto_book=False
+        1,
+        city="A",
+        clinic=DummyIdValue(10),
+        start_date=datetime.date.fromisoformat("2024-01-01"),
+        auto_book=False,
     )
-    new = {"city": "B", "clinic_id": 11, "start_date": datetime.date.fromisoformat("2024-01-01"), "auto_book": True}
+    new = {
+        "city": "B",
+        "clinic_id": 11,
+        "start_date": datetime.date.fromisoformat("2024-01-01"),
+        "auto_book": True,
+    }
 
     # Act
     changed = get_changed_fields(old, new)

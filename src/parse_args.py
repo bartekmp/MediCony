@@ -55,7 +55,11 @@ def command_line_parser() -> argparse.ArgumentParser:
         help="Sets the appointment type to examination",
     )
     find_appointment.add_argument(
-        "-n", "--notification", action="store_true", required=False, help="Notification method"
+        "-n",
+        "--notification",
+        action="store_true",
+        required=False,
+        help="Notification method",
     )
     find_appointment.add_argument("-t", "--title", required=False, help="Notification title")
 
@@ -89,7 +93,11 @@ def command_line_parser() -> argparse.ArgumentParser:
         help="Sets the appointment type to examination",
     )
     book_appointment.add_argument(
-        "-n", "--notification", action="store_true", required=False, help="Notification method"
+        "-n",
+        "--notification",
+        action="store_true",
+        required=False,
+        help="Notification method",
     )
     book_appointment.add_argument("-t", "--title", required=False, help="Notification title")
 
@@ -187,9 +195,19 @@ def command_line_parser() -> argparse.ArgumentParser:
     # list-watches
     list_watches = subparsers.add_parser("list-watches", help="List watches")
     list_watches.add_argument(
-        "-n", "--notification", action="store_true", required=False, help="Send notifications via Telegram"
+        "-n",
+        "--notification",
+        action="store_true",
+        required=False,
+        help="Send notifications via Telegram",
     )
-    list_watches.add_argument("-A", "--account", required=False, type=str, help="Filter watches by account alias")
+    list_watches.add_argument(
+        "-A",
+        "--account",
+        required=False,
+        type=str,
+        help="Filter watches by account alias",
+    )
 
     list_filters = subparsers.add_parser("list-filters", help="List filters")
 
@@ -217,7 +235,11 @@ def command_line_parser() -> argparse.ArgumentParser:
     edit_watch.add_argument("-i", "--id", required=True, type=int, help="Watch ID to edit")
     edit_watch.add_argument("-m", "--city", required=False, default=None, type=str, help="City name")
     edit_watch.add_argument(
-        "-A", "--account", required=False, type=str, help="Medicover account alias (ignored if watch already has one)"
+        "-A",
+        "--account",
+        required=False,
+        type=str,
+        help="Medicover account alias (ignored if watch already has one)",
     )
     edit_watch.add_argument("-c", "--clinic", required=False, default=None, type=int, help="Clinic ID")
     edit_watch.add_argument(
@@ -267,11 +289,27 @@ def command_line_parser() -> argparse.ArgumentParser:
     # add-medicine
     add_medicine = subparsers.add_parser("add-medicine", help="Add medicine search")
     add_medicine.add_argument("-n", "--name", required=True, type=str, help="Medicine name")
-    add_medicine.add_argument("-d", "--dosage", required=False, type=str, help="Medicine dosage (e.g., 500mg, 10ml)")
-    add_medicine.add_argument("--amount", required=False, type=str, help="Package amount/unit (e.g., 50 tabl., 200ml)")
+    add_medicine.add_argument(
+        "-d",
+        "--dosage",
+        required=False,
+        type=str,
+        help="Medicine dosage (e.g., 500mg, 10ml)",
+    )
+    add_medicine.add_argument(
+        "--amount",
+        required=False,
+        type=str,
+        help="Package amount/unit (e.g., 50 tabl., 200ml)",
+    )
     add_medicine.add_argument("-l", "--location", required=True, type=str, help="Location (address or city)")
     add_medicine.add_argument(
-        "-r", "--radius", required=False, type=float, default=5.0, help="Search radius in km (default: 5.0)"
+        "-r",
+        "--radius",
+        required=False,
+        type=float,
+        default=5.0,
+        help="Search radius in km (default: 5.0)",
     )
     add_medicine.add_argument("-p", "--max-price", required=False, type=float, help="Maximum price in zł")
     add_medicine.add_argument(
@@ -293,7 +331,11 @@ def command_line_parser() -> argparse.ArgumentParser:
     # list-medicines
     list_medicines = subparsers.add_parser("list-medicines", help="List medicine searches")
     list_medicines.add_argument(
-        "-n", "--notification", action="store_true", required=False, help="Send notifications via Telegram"
+        "-n",
+        "--notification",
+        action="store_true",
+        required=False,
+        help="Send notifications via Telegram",
     )
 
     ########################################
@@ -302,7 +344,12 @@ def command_line_parser() -> argparse.ArgumentParser:
     edit_medicine.add_argument("-i", "--id", required=True, type=int, help="Medicine ID to edit")
     edit_medicine.add_argument("-n", "--name", required=False, type=str, help="Medicine name")
     edit_medicine.add_argument("-d", "--dosage", required=False, type=str, help="Medicine dosage")
-    edit_medicine.add_argument("--amount", required=False, type=str, help="Package amount/unit (e.g., 50 tabl., 200ml)")
+    edit_medicine.add_argument(
+        "--amount",
+        required=False,
+        type=str,
+        help="Package amount/unit (e.g., 50 tabl., 200ml)",
+    )
     edit_medicine.add_argument("-l", "--location", required=False, type=str, help="Location (address or city)")
     edit_medicine.add_argument("-r", "--radius", required=False, type=float, help="Search radius in km")
     edit_medicine.add_argument("-p", "--max-price", required=False, type=float, help="Maximum price in zł")
@@ -320,7 +367,11 @@ def command_line_parser() -> argparse.ArgumentParser:
     search_medicine = subparsers.add_parser("search-medicine", help="Search for a specific medicine")
     search_medicine.add_argument("-i", "--id", required=True, type=int, help="Medicine ID")
     search_medicine.add_argument(
-        "-n", "--notification", action="store_true", required=False, help="Send results via Telegram"
+        "-n",
+        "--notification",
+        action="store_true",
+        required=False,
+        help="Send results via Telegram",
     )
 
     return parser

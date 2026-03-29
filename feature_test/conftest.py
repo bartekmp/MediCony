@@ -39,6 +39,7 @@ def env_vars(setup_environment) -> dict:
     if user_data := os.environ.get("MEDICOVER_USERDATA"):
         # Use the same validation as the main config parser
         from src.config import parse_medicover_accounts
+
         try:
             accounts, default_alias = parse_medicover_accounts(user_data)
             if accounts:
@@ -61,11 +62,17 @@ def skip_if_no_real_userdata(setup_environment):
 @pytest.fixture(scope="function")
 async def api_client(skip_if_no_real_userdata, env_vars):
     from src.medicover.api_client import MediAPI
-    from src.medicover.auth import Authenticator
+    from src.medicover.auth import Authenticator, MfaVerificationError
+    from src.medicover.stdin_mfa_provider import stdin_mfa_provider
 
     authenticator = Authenticator(env_vars["user_data"])
+    authenticator.mfa_code_provider = stdin_mfa_provider
     api_client = MediAPI(authenticator)
-    await api_client.authenticate()
+
+    try:
+        await api_client.authenticate()
+    except MfaVerificationError:
+        pytest.skip("MFA required and cannot be provided interactively (e.g. Jenkins/CI). Skipping.")
 
     return api_client
 

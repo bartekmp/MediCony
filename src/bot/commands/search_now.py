@@ -47,7 +47,8 @@ def register_search_now_handler(
 
         if watches_count == 0 and medicines_count == 0:
             await message.answer(
-                "📝 Nothing to search. No watches or medicines are configured.\nUse /watch_add or /medicine_add to add some.")
+                "📝 Nothing to search. No watches or medicines are configured.\nUse /watch_add or /medicine_add to add some."
+            )
             log.info(f"↩ Finished command: {command_name} (no watches or medicines configured)")
             return
 
@@ -59,7 +60,8 @@ def register_search_now_handler(
         # Signal the daemon to skip sleep and run next cycle immediately
         try:
             await message.answer(
-                f"⏩ Triggering immediate search cycle. Watches: {watches_count}, medicines: {medicines_count}.")
+                f"⏩ Triggering immediate search cycle. Watches: {watches_count}, medicines: {medicines_count}."
+            )
             if message.from_user:
                 log.info(f"User {message.from_user.id} requested immediate search")
             wake_event.set()

@@ -73,7 +73,12 @@ def test_medicine_search(medicine: Medicine):
 
         chromedriver_path = os.environ.get("CHROMEDRIVER_PATH", "/usr/bin/chromedriver")
         if not os.path.exists(chromedriver_path) and not any(
-            os.path.exists(p) for p in ["/usr/bin/chromium-browser", "/usr/bin/chromium", "/usr/bin/google-chrome"]
+            os.path.exists(p)
+            for p in [
+                "/usr/bin/chromium-browser",
+                "/usr/bin/chromium",
+                "/usr/bin/google-chrome",
+            ]
         ):
             pytest.skip("ChromeDriver / Chromium not installed on this system")
         raise
@@ -146,7 +151,12 @@ def test_fuzzy_medicine_matching():
         ("Euthyrox N 50", "Euthyrox N 50", True, "exact match"),
         ("Euthyrox N 50", "Euthyrox N 50 mg", True, "with mg suffix"),
         ("Euthyrox N 50", "Euthyrox N 50mg", True, "with mg suffix without space"),
-        ("Euthyrox N 50", "Euthyrox 50mg", True, "not full name, with mg suffix without space"),
+        (
+            "Euthyrox N 50",
+            "Euthyrox 50mg",
+            True,
+            "not full name, with mg suffix without space",
+        ),
         ("Euthyrox N 50", "Euthyrox 50", True, "not full name, without mg suffix"),
         ("Euthyrox N 50", "Letrox 50", False, "different medicine"),
         ("Apap", "APAP Extra", True, "partial match"),

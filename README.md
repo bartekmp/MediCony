@@ -13,7 +13,7 @@
 
 > [!IMPORTANT]
 > **Requirements**: MediCony requires a valid **Medicover account** credentials. To fully utilize the booking and appointment search features, an **active subscription** to Medicover services is highly recommended. Without a subscription, search results may be limited key features might not work as intended.
-> **Multi-factor Authentication**: Currently, in order to use MediCony, you need to turn off the MFA for your account, as it interrupts the automation flow of the application. I plan to add a way of sending the SMS code to the Telegram bot to salvage that in the future.
+> **Multi-factor Authentication**: Fully supported. MediCony is compliant with the current Medicover login logic that demands MFA. If a 2FA code is requested during login, MediCony will immediately ask for the verification code via both its interactive Telegram bot and the terminal (CLI). Entering the code saves the device as trusted, minimizing future login interruptions.
 
 ---
 

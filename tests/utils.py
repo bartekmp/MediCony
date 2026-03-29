@@ -68,7 +68,9 @@ def create_mock_fsm_context(initial_data: Optional[Dict[str, Any]] = None) -> Ma
 
 
 def setup_command_handler(
-    handler_register_func: Callable, watch_service: Optional[MagicMock] = None, **kwargs: Any
+    handler_register_func: Callable,
+    watch_service: Optional[MagicMock] = None,
+    **kwargs: Any,
 ) -> Tuple[MagicMock, Router]:
     """Set up a command handler with dispatcher and router for testing."""
     dp = MagicMock(spec=Dispatcher)
@@ -86,7 +88,8 @@ def setup_command_handler(
 
 
 def setup_watch_service(
-    available_filters: Optional[List[Dict[str, Any]]] = None, watches: Optional[List[Any]] = None
+    available_filters: Optional[List[Dict[str, Any]]] = None,
+    watches: Optional[List[Any]] = None,
 ) -> MagicMock:
     """Create a mock watch service for testing."""
     watch_service = MagicMock()
@@ -95,7 +98,10 @@ def setup_watch_service(
         watch_service.list_available_filters = AsyncMock(return_value=available_filters)
     else:
         watch_service.list_available_filters = AsyncMock(
-            side_effect=lambda what, **kwargs: [{"id": 1, "value": "A"}, {"id": 2, "value": "B"}]
+            side_effect=lambda what, **kwargs: [
+                {"id": 1, "value": "A"},
+                {"id": 2, "value": "B"},
+            ]
         )
 
     if watches is not None:

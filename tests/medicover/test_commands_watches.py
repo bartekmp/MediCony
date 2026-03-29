@@ -44,7 +44,10 @@ async def test_handle_watches_with_watches(monkeypatch):
     handler = register_watches_handler(dp, watch_service)
 
     # Patch necessary functions
-    monkeypatch.setattr("src.bot.commands.watch_list.format_elements_as_text", lambda w: "watch1\nwatch2")
+    monkeypatch.setattr(
+        "src.bot.commands.watch_list.format_elements_as_text",
+        lambda w: "watch1\nwatch2",
+    )
     monkeypatch.setattr("src.bot.commands.watch_list.is_message_below_max_length", lambda m: True)
     monkeypatch.setattr("src.bot.commands.watch_list.format_single_text_element", lambda t: t)
 

@@ -102,14 +102,19 @@ def register_edit_watch_handler(dispatcher: Dispatcher, watch_service: WatchServ
         await state.update_data(watches=watches)
         watch_ids = [w.id for w in watches]
         await message.answer(
-            "▶️ Choose the *ID* of the watch to edit:", parse_mode="MarkdownV2", reply_markup=id_keyboard(watch_ids)
+            "▶️ Choose the *ID* of the watch to edit:",
+            parse_mode="MarkdownV2",
+            reply_markup=id_keyboard(watch_ids),
         )
         await state.set_state(EditWatchStates.choosing_watch)
 
     @router.message(EditWatchStates.choosing_watch)
     async def choose_watch(message: types.Message, state: FSMContext):
         if message.text and is_abort(message.text):
-            await message.answer("🚫 Editing aborted. All changes discarded.", reply_markup=ReplyKeyboardRemove())
+            await message.answer(
+                "🚫 Editing aborted. All changes discarded.",
+                reply_markup=ReplyKeyboardRemove(),
+            )
             await state.clear()
             log.info(f"↩ Aborted command: {command_name}")
             return
@@ -128,7 +133,10 @@ def register_edit_watch_handler(dispatcher: Dispatcher, watch_service: WatchServ
     @router.message(EditWatchStates.editing_city)
     async def edit_city(message: types.Message, state: FSMContext):
         if message.text and is_abort(message.text):
-            await message.answer("🚫 Editing aborted. All changes discarded.", reply_markup=ReplyKeyboardRemove())
+            await message.answer(
+                "🚫 Editing aborted. All changes discarded.",
+                reply_markup=ReplyKeyboardRemove(),
+            )
             await state.clear()
             log.info(f"↩ Aborted command: {command_name}")
             return
@@ -150,7 +158,10 @@ def register_edit_watch_handler(dispatcher: Dispatcher, watch_service: WatchServ
             return
 
         if available_clinics := "".join([f"  *{c['id']}* : {escape_markdown(c['value'])}\n" for c in clinics]):
-            await message.answer("💡 Available clinics in given region:\n" + available_clinics, parse_mode="MarkdownV2")
+            await message.answer(
+                "💡 Available clinics in given region:\n" + available_clinics,
+                parse_mode="MarkdownV2",
+            )
 
         clinic_ids = [c["id"] for c in clinics]
         await message.answer(
@@ -164,7 +175,10 @@ def register_edit_watch_handler(dispatcher: Dispatcher, watch_service: WatchServ
     @router.message(EditWatchStates.editing_clinic)
     async def edit_clinic(message: types.Message, state: FSMContext):
         if message.text and is_abort(message.text):
-            await message.answer("🚫 Editing aborted. All changes discarded.", reply_markup=ReplyKeyboardRemove())
+            await message.answer(
+                "🚫 Editing aborted. All changes discarded.",
+                reply_markup=ReplyKeyboardRemove(),
+            )
             await state.clear()
             log.info(f"↩ Aborted command: {command_name}")
             return
@@ -176,7 +190,8 @@ def register_edit_watch_handler(dispatcher: Dispatcher, watch_service: WatchServ
             clinic_id = validate_int(clinic) if clinic else None
             if clinic and clinic_id is None:
                 await message.answer(
-                    "❌ *Invalid clinic ID*\nPlease enter a valid integer or press *Skip*:", parse_mode="MarkdownV2"
+                    "❌ *Invalid clinic ID*\nPlease enter a valid integer or press *Skip*:",
+                    parse_mode="MarkdownV2",
                 )
                 return
 
@@ -188,7 +203,10 @@ def register_edit_watch_handler(dispatcher: Dispatcher, watch_service: WatchServ
     @router.message(EditWatchStates.editing_start_date)
     async def edit_start_date(message: types.Message, state: FSMContext):
         if message.text and is_abort(message.text):
-            await message.answer("🚫 Editing aborted. All changes discarded.", reply_markup=ReplyKeyboardRemove())
+            await message.answer(
+                "🚫 Editing aborted. All changes discarded.",
+                reply_markup=ReplyKeyboardRemove(),
+            )
             await state.clear()
             log.info(f"↩ Aborted command: {command_name}")
             return
@@ -221,7 +239,10 @@ def register_edit_watch_handler(dispatcher: Dispatcher, watch_service: WatchServ
     @router.message(EditWatchStates.editing_end_date)
     async def edit_end_date(message: types.Message, state: FSMContext):
         if message.text and is_abort(message.text):
-            await message.answer("🚫 Editing aborted. All changes discarded.", reply_markup=ReplyKeyboardRemove())
+            await message.answer(
+                "🚫 Editing aborted. All changes discarded.",
+                reply_markup=ReplyKeyboardRemove(),
+            )
             await state.clear()
             log.info(f"↩ Aborted command: {command_name}")
             return
@@ -267,7 +288,10 @@ def register_edit_watch_handler(dispatcher: Dispatcher, watch_service: WatchServ
     @router.message(EditWatchStates.editing_time_range)
     async def edit_time_range(message: types.Message, state: FSMContext):
         if message.text and is_abort(message.text):
-            await message.answer("🚫 Editing aborted. All changes discarded.", reply_markup=ReplyKeyboardRemove())
+            await message.answer(
+                "🚫 Editing aborted. All changes discarded.",
+                reply_markup=ReplyKeyboardRemove(),
+            )
             await state.clear()
             log.info(f"↩ Aborted command: {command_name}")
             return
@@ -290,13 +314,21 @@ def register_edit_watch_handler(dispatcher: Dispatcher, watch_service: WatchServ
         await state.update_data(time_range=tr_val)
         watch_exclusions = getattr(watch, "exclusions", None)
         flat_exclusions = flatten_exclusions(watch_exclusions) if watch_exclusions else None
-        await ask_with_skip(message, "exclusions", "TYPE:ID, e.g. doctor:123,345;clinic:777,888;[...]", flat_exclusions)
+        await ask_with_skip(
+            message,
+            "exclusions",
+            "TYPE:ID, e.g. doctor:123,345;clinic:777,888;[...]",
+            flat_exclusions,
+        )
         await state.set_state(EditWatchStates.editing_exclusions)
 
     @router.message(EditWatchStates.editing_exclusions)
     async def edit_exclusions(message: types.Message, state: FSMContext):
         if message.text and is_abort(message.text):
-            await message.answer("🚫 Editing aborted. All changes discarded.", reply_markup=ReplyKeyboardRemove())
+            await message.answer(
+                "🚫 Editing aborted. All changes discarded.",
+                reply_markup=ReplyKeyboardRemove(),
+            )
             await state.clear()
             log.info(f"↩ Aborted command: {command_name}")
             return
@@ -332,7 +364,10 @@ def register_edit_watch_handler(dispatcher: Dispatcher, watch_service: WatchServ
     @router.message(EditWatchStates.editing_auto_book)
     async def edit_auto_book(message: types.Message, state: FSMContext):
         if message.text and is_abort(message.text):
-            await message.answer("🚫 Editing aborted. All changes discarded.", reply_markup=ReplyKeyboardRemove())
+            await message.answer(
+                "🚫 Editing aborted. All changes discarded.",
+                reply_markup=ReplyKeyboardRemove(),
+            )
             await state.clear()
             log.info(f"↩ Aborted command: {command_name}")
             return

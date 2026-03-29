@@ -4,7 +4,12 @@ from secrets import choice
 
 import pytest
 
-from src.medicover.auth import Authenticator, LoginError, TokenExchangeError, parse_userdata
+from src.medicover.auth import (
+    Authenticator,
+    LoginError,
+    TokenExchangeError,
+    parse_userdata,
+)
 
 
 def get_random_login_string():
@@ -40,10 +45,17 @@ async def test_valid_real_login(skip_if_no_real_userdata, env_vars):
     # Test valid login credentials
     if "user_data" not in env_vars:
         pytest.skip("MEDICOVER_USERDATA not available")
-    
+
+    from src.medicover.stdin_mfa_provider import stdin_mfa_provider
+
     authenticator = Authenticator(env_vars["user_data"])
+    authenticator.mfa_code_provider = stdin_mfa_provider
+    from src.medicover.auth import MfaVerificationError
+
     try:
         await authenticator.login()
+    except MfaVerificationError:
+        pytest.skip("MFA required and cannot be provided interactively (e.g. Jenkins/CI). Skipping.")
     except LoginError:
         pytest.fail("Login should not raise LoginError for valid credentials")
     except TokenExchangeError:
@@ -54,13 +66,19 @@ async def test_reauthentication_after_error(skip_if_no_real_userdata, env_vars):
     # Test that reauthentication works after an initial error
     if "user_data" not in env_vars:
         pytest.skip("MEDICOVER_USERDATA not available")
-        
+
+    from src.medicover.stdin_mfa_provider import stdin_mfa_provider
+    from src.medicover.auth import MfaVerificationError
+
     authenticator = Authenticator(env_vars["user_data"])
+    authenticator.mfa_code_provider = stdin_mfa_provider
 
     # First login should succeed
     try:
         session1 = await authenticator.login()
         assert session1 is not None
+    except MfaVerificationError:
+        pytest.skip("MFA required and cannot be provided interactively (e.g. Jenkins/CI). Skipping.")
     except (LoginError, TokenExchangeError):
         pytest.fail("Initial login should succeed for valid credentials")
 

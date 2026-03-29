@@ -28,7 +28,10 @@ async def test_add_watch_full_flow():
     # Simulate watch service
     watch_service = MagicMock()
     watch_service.list_available_filters = AsyncMock(
-        side_effect=lambda what, **kwargs: [{"id": 1, "value": "A"}, {"id": 2, "value": "B"}]
+        side_effect=lambda what, **kwargs: [
+            {"id": 1, "value": "A"},
+            {"id": 2, "value": "B"},
+        ]
     )
     watch_service.add_watch = MagicMock()
 
@@ -228,7 +231,10 @@ async def test_add_watch_suggested_region_city(monkeypatch):
     state.clear = AsyncMock()
     watch_service = MagicMock()
     watch_service.list_available_filters = AsyncMock(
-        side_effect=lambda what, **kwargs: [{"id": 1, "value": "A"}, {"id": 2, "value": "B"}]
+        side_effect=lambda what, **kwargs: [
+            {"id": 1, "value": "A"},
+            {"id": 2, "value": "B"},
+        ]
     )
     watch_service.add_watch = MagicMock()
     dp = MagicMock()

@@ -9,7 +9,12 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import ReplyKeyboardRemove
 from pharmaradar import MedicineWatchdog
 
-from src.bot.shared_utils import abort_and_skip_keyboard, escape_markdown, id_keyboard, is_abort
+from src.bot.shared_utils import (
+    abort_and_skip_keyboard,
+    escape_markdown,
+    id_keyboard,
+    is_abort,
+)
 from src.bot.validation_utils import validate_int
 from src.logger import log
 
@@ -67,7 +72,10 @@ def register_remove_medicine_handler(dispatcher: Dispatcher, medicine_service: M
         # Check if medicine exists
         medicine = medicine_service.get_medicine(medicine_id)
         if not medicine:
-            await message.answer(f"❌ Medicine with ID {medicine_id} not found", reply_markup=abort_and_skip_keyboard())
+            await message.answer(
+                f"❌ Medicine with ID {medicine_id} not found",
+                reply_markup=abort_and_skip_keyboard(),
+            )
             return
 
         await state.update_data(medicine_id=medicine_id, medicine=medicine)
@@ -118,7 +126,7 @@ def register_remove_medicine_handler(dispatcher: Dispatcher, medicine_service: M
 
             if success:
                 await message.answer(
-                    f"✅ Medicine search removed successfully\\!\n\n" f"💊 {escape_markdown(medicine.full_name)}",
+                    f"✅ Medicine search removed successfully\\!\n\n💊 {escape_markdown(medicine.full_name)}",
                     parse_mode="MarkdownV2",
                     reply_markup=ReplyKeyboardRemove(),
                 )

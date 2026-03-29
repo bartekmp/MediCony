@@ -33,7 +33,10 @@ class MedicoverDbLogic(BaseDbLogic):
                     session.query(MedicoverAppointmentModel).filter(MedicoverAppointmentModel.date < now).delete()
                     # Delete watches that have ended
                     session.query(MedicoverWatchModel).filter(
-                        and_(MedicoverWatchModel.endDate.isnot(None), MedicoverWatchModel.endDate < today)
+                        and_(
+                            MedicoverWatchModel.endDate.isnot(None),
+                            MedicoverWatchModel.endDate < today,
+                        )
                     ).delete()
                     session.commit()
                     log.info("Database cleared of old appointments and ended watches")
@@ -47,7 +50,8 @@ class MedicoverDbLogic(BaseDbLogic):
             try:
                 with self.get_session() as session:
                     result = (
-                        session.query(MedicoverAppointmentModel)
+                        session
+                        .query(MedicoverAppointmentModel)
                         .filter(
                             and_(
                                 MedicoverAppointmentModel.clinic == appointment.clinic.id,
@@ -68,7 +72,8 @@ class MedicoverDbLogic(BaseDbLogic):
             try:
                 with self.get_session() as session:
                     appointments = (
-                        session.query(MedicoverAppointmentModel)
+                        session
+                        .query(MedicoverAppointmentModel)
                         .filter(MedicoverAppointmentModel.bookingIdentifier.isnot(None))
                         .all()
                     )
@@ -140,7 +145,8 @@ class MedicoverDbLogic(BaseDbLogic):
             try:
                 with self.get_session() as session:
                     existing = (
-                        session.query(MedicoverAppointmentModel)
+                        session
+                        .query(MedicoverAppointmentModel)
                         .filter(
                             and_(
                                 MedicoverAppointmentModel.clinic == appointment.clinic.id,
@@ -153,15 +159,13 @@ class MedicoverDbLogic(BaseDbLogic):
 
                     if existing:
                         # Update using session.merge or direct attribute setting
-                        session.query(MedicoverAppointmentModel).filter_by(id=existing.id).update(
-                            {
-                                "specialty": appointment.specialty.id,
-                                "visitType": appointment.visit_type,
-                                "bookingString": appointment.booking_string,
-                                "bookingIdentifier": getattr(appointment, "booking_identifier", None),
-                                "account": getattr(appointment, "account", None),
-                            }
-                        )
+                        session.query(MedicoverAppointmentModel).filter_by(id=existing.id).update({
+                            "specialty": appointment.specialty.id,
+                            "visitType": appointment.visit_type,
+                            "bookingString": appointment.booking_string,
+                            "bookingIdentifier": getattr(appointment, "booking_identifier", None),
+                            "account": getattr(appointment, "account", None),
+                        })
                         session.commit()
             except SQLAlchemyError as e:
                 log.error(f"Error updating appointment: {e}")

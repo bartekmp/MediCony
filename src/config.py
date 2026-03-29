@@ -50,7 +50,6 @@ def parse_medicover_accounts(raw: str) -> Tuple[Dict[str, Tuple[str, str]], str]
 
     # Multi-account format; split on ';'
     seen_usernames = set()
-    first_alias: Optional[str] = None
     for idx, part in enumerate(filter(None, [p.strip() for p in raw.split(";")])):
         if "@" not in part:
             # Fallback attempt: treat as single user:pass chunk - process only the first one
@@ -77,7 +76,6 @@ def parse_medicover_accounts(raw: str) -> Tuple[Dict[str, Tuple[str, str]], str]
             raise ValueError(f"Duplicate alias found: {alias}")
         if idx == 0:
             default_alias = alias
-            first_alias = alias
         accounts[alias] = (username, password)
 
     # In multi-account mode, do not add implicit 'default' alias to keep aliases exact

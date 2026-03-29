@@ -28,7 +28,7 @@ def register_remove_watch_handler(dispatcher: Dispatcher, watch_service: WatchSe
             return
         formatted_watches = format_elements_as_text(watches)
         await message.answer(
-            f"Active watches: {len(watches)}\n" f"🗑️ Choose a watch to remove:\n{'-' * 50}\n{formatted_watches}",
+            f"Active watches: {len(watches)}\n🗑️ Choose a watch to remove:\n{'-' * 50}\n{formatted_watches}",
         )
         watch_ids = [str(w.id) for w in watches]
         await message.answer(
@@ -52,7 +52,8 @@ def register_remove_watch_handler(dispatcher: Dispatcher, watch_service: WatchSe
         all_watch_ids = [str(w["id"]) for w in watches]
         if watch_id and not any(w == watch_id for w in all_watch_ids):
             await message.answer(
-                "❌ Invalid watch ID. Please try again.", reply_markup=id_keyboard(all_watch_ids, add_abort=True)
+                "❌ Invalid watch ID. Please try again.",
+                reply_markup=id_keyboard(all_watch_ids, add_abort=True),
             )
             return
         try:

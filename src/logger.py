@@ -11,7 +11,12 @@ MEDICONY_LOG_PATH = "log/medicony.log"  # Default path, will be overridden by co
 
 def read_n_log_lines_from_file(file_path: str = MEDICONY_LOG_PATH, num_lines: int = 30) -> str:
     try:
-        result = subprocess.run(["tail", f"-n{num_lines}", file_path], check=True, capture_output=True, text=True)
+        result = subprocess.run(
+            ["tail", f"-n{num_lines}", file_path],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
         return result.stdout
     except subprocess.CalledProcessError as e:
         print(f"Running tail failed: {e}")

@@ -22,7 +22,10 @@ def register_watches_handler(dp: Dispatcher, watch_service: WatchService):
             watches: list[Watch] = await watch_service.get_all_watches()
             if not watches:
                 await send_formatted_reply(
-                    command_name, message, format_single_text_element("✅ No active watches"), None
+                    command_name,
+                    message,
+                    format_single_text_element("✅ No active watches"),
+                    None,
                 )
                 return
             formatted_message = str(format_elements_as_text(watches))

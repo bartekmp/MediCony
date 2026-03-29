@@ -117,7 +117,18 @@ def test_watch_initialization_full_with_dedicated_types_multiple_specialties():
 
 def test_watch_initialization_full_with_strings():
     """Test initializing a Watch with full set of parameters using string values."""
-    init = (11, 22, "xxxx", [33], 44, 55, "2137-09-01", "2137-09-17", "12:12:12-13:13:13", True)
+    init = (
+        11,
+        22,
+        "xxxx",
+        [33],
+        44,
+        55,
+        "2137-09-01",
+        "2137-09-17",
+        "12:12:12-13:13:13",
+        True,
+    )
     watch = Watch.from_tuple(init)
 
     assert watch.id == 11
@@ -239,7 +250,20 @@ def test_watch_to_string_with_descriptive_values_multiple_specialties():
 
 def test_watch_to_short_str():
     """Test the short string representation of a Watch object."""
-    init = (51, 52, "yyy", [53], 54, 55, "2137-09-01", "2137-09-17", "12:15:36", True, None, "DiagnosticProcedure")
+    init = (
+        51,
+        52,
+        "yyy",
+        [53],
+        54,
+        55,
+        "2137-09-01",
+        "2137-09-17",
+        "12:15:36",
+        True,
+        None,
+        "DiagnosticProcedure",
+    )
     watch = Watch.from_tuple(init)
     expected = "ID 51; r: 52; ci: yyy; t: DiagnosticProcedure; s: 53; cl: 54; d: 55; dr: 2137-09-01–2137-09-17; tr: 12:15:36-*; ab: True; excl: None; acc: default"
 
@@ -272,58 +296,52 @@ def test_watch_active_status():
     """Test the active status determination of a Watch object."""
     starting_point = date.today()
     threshold = 1  # days
-    w1 = Watch.from_tuple(
-        (
-            51,
-            52,
-            "yyy",
-            [53, 56, 59],
-            54,
-            55,
-            starting_point + timedelta(days=2),
-            "2137-09-17",
-            "12:15:36",
-            True,
-            None,
-            "DiagnosticProcedure",
-        )
-    )
+    w1 = Watch.from_tuple((
+        51,
+        52,
+        "yyy",
+        [53, 56, 59],
+        54,
+        55,
+        starting_point + timedelta(days=2),
+        "2137-09-17",
+        "12:15:36",
+        True,
+        None,
+        "DiagnosticProcedure",
+    ))
     assert w1.is_active(threshold, starting_point) == WatchActiveStatus.INACTIVE
 
-    w2 = Watch.from_tuple(
-        (
-            51,
-            52,
-            "yyy",
-            [53, 56, 59],
-            54,
-            55,
-            starting_point - timedelta(days=10),
-            starting_point - timedelta(days=2),
-            "12:15:36",
-            True,
-            "clinic:123,456",
-            "DiagnosticProcedure",
-        )
-    )
+    w2 = Watch.from_tuple((
+        51,
+        52,
+        "yyy",
+        [53, 56, 59],
+        54,
+        55,
+        starting_point - timedelta(days=10),
+        starting_point - timedelta(days=2),
+        "12:15:36",
+        True,
+        "clinic:123,456",
+        "DiagnosticProcedure",
+    ))
     assert w2.is_active(threshold, starting_point) == WatchActiveStatus.EXPIRED
 
-    w3 = Watch.from_tuple(
-        (
-            51,
-            52,
-            "yyy",
-            [53, 56, 59],
-            54,
-            55,
-            starting_point,
-            starting_point + timedelta(days=10),
-            "12:15:36",
-            True,
-            "doctor:123,456",
-            "DiagnosticProcedure",
-        )
-    )
+    w3 = Watch.from_tuple((
+        51,
+        52,
+        "yyy",
+        [53, 56, 59],
+        54,
+        55,
+        starting_point,
+        starting_point + timedelta(days=10),
+        "12:15:36",
+        True,
+        "doctor:123,456",
+        "DiagnosticProcedure",
+    ))
     assert w3.is_active(threshold, starting_point) == WatchActiveStatus.ACTIVE
 
 

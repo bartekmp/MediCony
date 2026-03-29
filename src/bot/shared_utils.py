@@ -105,7 +105,11 @@ def ask_with_skip(
 ):
     format_text = f"\nFormat: *{escape_markdown(format)}*\n" if format else ""
     text = f"{format_current_value(prompt, current_value)}▶️ Enter new *{prompt}* or press *Skip*:\n{format_text}"
-    return message.answer(text, parse_mode="MarkdownV2", reply_markup=keyboard or abort_and_skip_keyboard())
+    return message.answer(
+        text,
+        parse_mode="MarkdownV2",
+        reply_markup=keyboard or abort_and_skip_keyboard(),
+    )
 
 
 def get_suggested_properties():

@@ -56,14 +56,21 @@ def register_activate_medicine_handler(dispatcher: Dispatcher, medicine_service:
 
         medicine_ids = [str(m.id) for m in medicines]
 
-        await message.answer(medicines_text, parse_mode="MarkdownV2", reply_markup=id_keyboard(medicine_ids))
+        await message.answer(
+            medicines_text,
+            parse_mode="MarkdownV2",
+            reply_markup=id_keyboard(medicine_ids),
+        )
         await state.set_state(ActivateMedicineStates.choosing_medicine_id)
 
     @router.message(ActivateMedicineStates.choosing_medicine_id)
     async def process_medicine_id(message: types.Message, state: FSMContext):
         """Process the medicine ID selection."""
         if not message.text:
-            await message.answer("❌ Invalid input\\. Please enter a medicine ID\\.", parse_mode="MarkdownV2")
+            await message.answer(
+                "❌ Invalid input\\. Please enter a medicine ID\\.",
+                parse_mode="MarkdownV2",
+            )
             return
 
         user_input = message.text.strip()
@@ -71,7 +78,9 @@ def register_activate_medicine_handler(dispatcher: Dispatcher, medicine_service:
         # Check for abort
         if is_abort(user_input):
             await message.answer(
-                "❌ Medicine activation cancelled\\.", parse_mode="MarkdownV2", reply_markup=ReplyKeyboardRemove()
+                "❌ Medicine activation cancelled\\.",
+                parse_mode="MarkdownV2",
+                reply_markup=ReplyKeyboardRemove(),
             )
             await state.clear()
             log.info(f"↩ Cancelled command: {command_name}")
@@ -80,14 +89,18 @@ def register_activate_medicine_handler(dispatcher: Dispatcher, medicine_service:
         # Validate medicine ID
         medicine_id = validate_int(user_input, min_value=1)
         if medicine_id is None:
-            await message.answer("❌ Invalid ID\\. Please enter a valid medicine ID\\.", parse_mode="MarkdownV2")
+            await message.answer(
+                "❌ Invalid ID\\. Please enter a valid medicine ID\\.",
+                parse_mode="MarkdownV2",
+            )
             return
 
         # Check if medicine exists
         medicine = medicine_service.get_medicine(medicine_id)
         if not medicine:
             await message.answer(
-                "❌ Medicine not found\\. Please enter a valid medicine ID\\.", parse_mode="MarkdownV2"
+                "❌ Medicine not found\\. Please enter a valid medicine ID\\.",
+                parse_mode="MarkdownV2",
             )
             return
 
@@ -124,7 +137,10 @@ def register_activate_medicine_handler(dispatcher: Dispatcher, medicine_service:
     async def process_action(message: types.Message, state: FSMContext):
         """Process the activation/deactivation action."""
         if not message.text:
-            await message.answer("❌ Invalid input\\. Please select an option\\.", parse_mode="MarkdownV2")
+            await message.answer(
+                "❌ Invalid input\\. Please select an option\\.",
+                parse_mode="MarkdownV2",
+            )
             return
 
         user_input = message.text.strip()
@@ -132,7 +148,9 @@ def register_activate_medicine_handler(dispatcher: Dispatcher, medicine_service:
         # Check for abort
         if is_abort(user_input):
             await message.answer(
-                "❌ Medicine activation cancelled\\.", parse_mode="MarkdownV2", reply_markup=ReplyKeyboardRemove()
+                "❌ Medicine activation cancelled\\.",
+                parse_mode="MarkdownV2",
+                reply_markup=ReplyKeyboardRemove(),
             )
             await state.clear()
             log.info(f"↩ Cancelled command: {command_name}")
@@ -147,7 +165,8 @@ def register_activate_medicine_handler(dispatcher: Dispatcher, medicine_service:
             action_text = "deactivate"
         else:
             await message.answer(
-                "❌ Invalid option\\. Please select Activate or Deactivate\\.", parse_mode="MarkdownV2"
+                "❌ Invalid option\\. Please select Activate or Deactivate\\.",
+                parse_mode="MarkdownV2",
             )
             return
 
@@ -156,7 +175,9 @@ def register_activate_medicine_handler(dispatcher: Dispatcher, medicine_service:
         medicine_id = data.get("medicine_id")
         if not isinstance(medicine_id, int):
             await message.answer(
-                "❌ Invalid medicine ID\\.", parse_mode="MarkdownV2", reply_markup=ReplyKeyboardRemove()
+                "❌ Invalid medicine ID\\.",
+                parse_mode="MarkdownV2",
+                reply_markup=ReplyKeyboardRemove(),
             )
             await state.clear()
             return
@@ -165,7 +186,9 @@ def register_activate_medicine_handler(dispatcher: Dispatcher, medicine_service:
 
         if not medicine:
             await message.answer(
-                "❌ Medicine not found\\.", parse_mode="MarkdownV2", reply_markup=ReplyKeyboardRemove()
+                "❌ Medicine not found\\.",
+                parse_mode="MarkdownV2",
+                reply_markup=ReplyKeyboardRemove(),
             )
             await state.clear()
             return
@@ -174,7 +197,9 @@ def register_activate_medicine_handler(dispatcher: Dispatcher, medicine_service:
         if medicine.active == new_status:
             status_text = "active" if new_status else "inactive"
             await message.answer(
-                f"ℹ️ Medicine is already {status_text}\\.", parse_mode="MarkdownV2", reply_markup=ReplyKeyboardRemove()
+                f"ℹ️ Medicine is already {status_text}\\.",
+                parse_mode="MarkdownV2",
+                reply_markup=ReplyKeyboardRemove(),
             )
             await state.clear()
             log.info(f"↩ Finished command: {command_name} (no change needed)")
@@ -195,7 +220,9 @@ def register_activate_medicine_handler(dispatcher: Dispatcher, medicine_service:
         cancel_button = KeyboardButton(text="❌ Cancel")
 
         confirm_keyboard = ReplyKeyboardMarkup(
-            keyboard=[[confirm_button], [cancel_button]], resize_keyboard=True, one_time_keyboard=True
+            keyboard=[[confirm_button], [cancel_button]],
+            resize_keyboard=True,
+            one_time_keyboard=True,
         )
 
         await message.answer(confirm_text, parse_mode="MarkdownV2", reply_markup=confirm_keyboard)
@@ -205,7 +232,10 @@ def register_activate_medicine_handler(dispatcher: Dispatcher, medicine_service:
     async def confirm_action(message: types.Message, state: FSMContext):
         """Confirm and execute the activation/deactivation."""
         if not message.text:
-            await message.answer("❌ Invalid input\\. Please select an option\\.", parse_mode="MarkdownV2")
+            await message.answer(
+                "❌ Invalid input\\. Please select an option\\.",
+                parse_mode="MarkdownV2",
+            )
             return
 
         user_input = message.text.strip()
@@ -219,7 +249,9 @@ def register_activate_medicine_handler(dispatcher: Dispatcher, medicine_service:
                 # Validate medicine_id type
                 if not isinstance(medicine_id, int):
                     await message.answer(
-                        "❌ Invalid medicine ID\\.", parse_mode="MarkdownV2", reply_markup=ReplyKeyboardRemove()
+                        "❌ Invalid medicine ID\\.",
+                        parse_mode="MarkdownV2",
+                        reply_markup=ReplyKeyboardRemove(),
                     )
                     await state.clear()
                     return
@@ -228,7 +260,9 @@ def register_activate_medicine_handler(dispatcher: Dispatcher, medicine_service:
                 medicine = medicine_service.get_medicine(medicine_id)
                 if not medicine:
                     await message.answer(
-                        "❌ Medicine not found\\.", parse_mode="MarkdownV2", reply_markup=ReplyKeyboardRemove()
+                        "❌ Medicine not found\\.",
+                        parse_mode="MarkdownV2",
+                        reply_markup=ReplyKeyboardRemove(),
                     )
                     log.info(f"↩ Failed command: {command_name} (medicine not found)")
                     await state.clear()
