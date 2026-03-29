@@ -93,7 +93,8 @@ async def test_handle_logs_exception(monkeypatch: pytest.MonkeyPatch) -> None:
 
     # Patch read_n_log_lines_from_file to raise an exception
     monkeypatch.setattr(
-        "src.bot.commands.logs.read_n_log_lines_from_file", lambda: (_ for _ in ()).throw(Exception("fail"))
+        "src.bot.commands.logs.read_n_log_lines_from_file",
+        lambda: (_ for _ in ()).throw(Exception("fail")),
     )
 
     handler = register_logs_handler(dp, send_formatted_reply_override=mock_send)

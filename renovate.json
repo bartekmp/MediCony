@@ -100,7 +100,7 @@
       "prPriority": 10,
       "automerge": false,
       "groupName": null,
-      "commitMessagePrefix": "feat!:"
+      "commitMessagePrefix": "update:"
     }
   ]
 }

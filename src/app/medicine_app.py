@@ -155,7 +155,8 @@ class MedicineApp:
         try:
             # Add timeout to prevent hanging
             pharmacies = await asyncio.wait_for(
-                self.medicine_service.search_medicine(medicine), timeout=self.config.medicine_search_timeout_seconds
+                self.medicine_service.search_medicine(medicine),
+                timeout=self.config.medicine_search_timeout_seconds,
             )
         except asyncio.TimeoutError:
             log.error(

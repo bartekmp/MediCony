@@ -8,7 +8,11 @@ for various outputs including console, log, and user interfaces.
 
 from typing import List
 
-from src.medicover.presenters import format_entity_by_lines, format_message_chunks, log_entities_with_info
+from src.medicover.presenters import (
+    format_entity_by_lines,
+    format_message_chunks,
+    log_entities_with_info,
+)
 from tests.utils import generate_random_appointment, generate_random_appointments
 
 

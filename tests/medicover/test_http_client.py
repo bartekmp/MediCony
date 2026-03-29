@@ -22,7 +22,10 @@ class TestHTTPClient:
         """Create a mock authenticator."""
         authenticator = MagicMock(spec=Authenticator)
         authenticator.login = AsyncMock()
-        authenticator.headers = {"Authorization": "Bearer test_token", "User-Agent": "test"}
+        authenticator.headers = {
+            "Authorization": "Bearer test_token",
+            "User-Agent": "test",
+        }
         return authenticator
 
     @pytest.fixture

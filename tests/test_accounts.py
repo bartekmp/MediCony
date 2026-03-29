@@ -38,23 +38,21 @@ def watch_service(db_client):
 
 def test_watch_persists_account_alias(db_client):
     # Create a watch with an explicit account alias
-    watch = Watch.from_tuple(
-        (
-            0,  # id (ignored on save)
-            101,  # region id
-            "CityX",  # city
-            [9],  # specialties
-            None,  # clinic
-            None,  # doctor
-            "2025-01-01",  # start
-            "2025-12-31",  # end
-            "00:00:00-*",  # time range
-            False,  # autobook
-            None,  # exclusions
-            WatchType.STANDARD.value,  # type
-            "accA",  # account alias
-        )
-    )
+    watch = Watch.from_tuple((
+        0,  # id (ignored on save)
+        101,  # region id
+        "CityX",  # city
+        [9],  # specialties
+        None,  # clinic
+        None,  # doctor
+        "2025-01-01",  # start
+        "2025-12-31",  # end
+        "00:00:00-*",  # time range
+        False,  # autobook
+        None,  # exclusions
+        WatchType.STANDARD.value,  # type
+        "accA",  # account alias
+    ))
     new_id = db_client.save_watch(watch)
     # Fetch back via client (which normalizes)
     stored = db_client.get_watch(new_id)
@@ -64,22 +62,20 @@ def test_watch_persists_account_alias(db_client):
 
 def test_watch_service_default_account_on_update(db_client, watch_service):
     # Create watch without account alias
-    watch = Watch.from_tuple(
-        (
-            0,
-            102,
-            "CityY",
-            [10],
-            None,
-            None,
-            "2025-01-01",
-            "2025-12-31",
-            "00:00:00-*",
-            False,
-            None,
-            WatchType.STANDARD.value,
-        )
-    )
+    watch = Watch.from_tuple((
+        0,
+        102,
+        "CityY",
+        [10],
+        None,
+        None,
+        "2025-01-01",
+        "2025-12-31",
+        "00:00:00-*",
+        False,
+        None,
+        WatchType.STANDARD.value,
+    ))
     watch_id = db_client.save_watch(watch)
     existing = db_client.get_watch(watch_id)
     assert existing is not None

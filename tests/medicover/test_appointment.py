@@ -62,9 +62,9 @@ def test_appointment_init_alternative_date() -> None:
     ap = Appointment(data)
 
     # Assert
-    assert ap.date_time == datetime.fromisoformat(
-        "2025-03-03 12:00:00"
-    ), "Date should be correctly parsed from 'date' field"
+    assert ap.date_time == datetime.fromisoformat("2025-03-03 12:00:00"), (
+        "Date should be correctly parsed from 'date' field"
+    )
     assert ap.clinic == IdValue(123, "clinic123"), "Clinic should be correctly extracted as IdValue"
     assert ap.doctor == IdValue(567, "doctor567"), "Doctor should be correctly extracted as IdValue"
     assert ap.specialty == IdValue(890, "specialty890"), "Specialty should be correctly extracted as IdValue"
@@ -131,7 +131,15 @@ def test_appointment_full_initializer_method():
     booking_string = "qwe"
     booking_identifier = 12345
 
-    ap = Appointment.initialize(clinic, date_time, doctor, specialty, visit_type, booking_string, booking_identifier)
+    ap = Appointment.initialize(
+        clinic,
+        date_time,
+        doctor,
+        specialty,
+        visit_type,
+        booking_string,
+        booking_identifier,
+    )
 
     assert ap.date_time == datetime.fromisoformat(date_time)
     assert ap.clinic == clinic

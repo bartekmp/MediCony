@@ -75,7 +75,11 @@ def validate_bool(value: str) -> bool | None:
     return None
 
 
-def validate_str(value: str | None, min_length: Optional[int] = None, max_length: Optional[int] = None) -> str | None:
+def validate_str(
+    value: str | None,
+    min_length: Optional[int] = None,
+    max_length: Optional[int] = None,
+) -> str | None:
     if not value or not value.strip():
         return None
 

@@ -4,6 +4,7 @@ MedicoverApp module handling all Medicover-related functionality.
 
 import asyncio
 from argparse import Namespace
+from collections.abc import Awaitable, Callable
 from random import randint
 
 from src.bot.telegram import notify
@@ -13,10 +14,13 @@ from src.id_value_util import IdValue
 from src.logger import log
 from src.medicover.api_client import MediAPI
 from src.medicover.appointment import Appointment
-from src.medicover.auth import Authenticator  # kept for backward compatibility / potential future removal
+from src.medicover.auth import (
+    Authenticator,
+)  # kept for backward compatibility / potential future removal
 from src.medicover.matchers import match_within_date_range
 from src.medicover.presenters import log_entities, log_entities_with_info
 from src.medicover.services.watch_service import WatchService
+from src.medicover.stdin_mfa_provider import stdin_mfa_provider
 from src.medicover.watch import Watch, WatchActiveStatus, WatchType, is_within
 
 
@@ -37,14 +41,22 @@ class MedicoverApp:
 
         # Initialize MediAPI with default account authenticator and register others lazily
         user, pwd = config.get_account(self.default_account)
-        self.api_client = MediAPI(Authenticator(f"{user}:{pwd}"), alias=self.default_account)
+        self.api_client = MediAPI(
+            Authenticator(f"{user}:{pwd}", mfa_code_provider=stdin_mfa_provider),
+            alias=self.default_account,
+        )
         # Register additional accounts for lazy use
         for alias, (u, p) in config.medicover_accounts.items():
             if alias != self.default_account:
-                self.api_client.add_account(alias, u, p)
+                self.api_client.add_account(alias, u, p, mfa_code_provider=stdin_mfa_provider)
 
         # Services depending on API/DB
         self.watch_service = WatchService(self.api_client, self.db_client)  # type: ignore[arg-type]
+
+    def set_mfa_code_provider(self, provider: Callable[[str], Awaitable[str | None]]):
+        """Set the MFA code provider on all registered account authenticators."""
+        for _alias, (authenticator, _client) in self.api_client._accounts.items():
+            authenticator.mfa_code_provider = provider
 
     async def switch_account(self, alias: str):
         if alias == self.default_account:
@@ -118,7 +130,9 @@ class MedicoverApp:
         if self.args.filter_type in ("doctors", "clinics"):
             # The "doctors" and "clinic" filters require region and specialty to be specified
             filters = await self.watch_service.list_available_filters(
-                self.args.filter_type, region=self.args.region, specialty=self.args.specialty
+                self.args.filter_type,
+                region=self.args.region,
+                specialty=self.args.specialty,
             )
         elif self.args.filter_type == "examinations":
             # The "examination" filter requires region, specialty and a specific type to be provided

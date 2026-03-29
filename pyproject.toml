@@ -22,7 +22,7 @@ dependencies = [
     "psycopg2-binary==2.9.11",
 ]
 optional-dependencies = { dev = [
-    "black==26.3.1",
+    "ruff>=0.9.0",
     "flake8==7.3.0",
     "isort==8.0.1",
     "pytest==9.0.2",
@@ -47,12 +47,26 @@ include-package-data = true
 version_scheme = "guess-next-dev"
 local_scheme = "node-and-date"
 
-[tool.black]
+[tool.ruff]
 line-length = 120
+target-version = "py312"
+exclude = [
+    ".git",
+    ".hg",
+    ".mypy_cache",
+    ".tox",
+    ".venv",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "venv",
+    "__pycache__",
+]
+
+[tool.ruff.format]
 preview = true
-include = "\\.py$"
-target-version = ["py312"]
-exclude = "(\\.git|\\.hg|\\.mypy_cache|\\.tox|\\.venv|_build|buck-out|build|dist|node_modules|venv|__pycache__)"
 
 [tool.pytest.ini_options]
 addopts = "--ignore=feature_tests"
@@ -71,7 +85,7 @@ version_toml = ["pyproject.toml:project.version"]
 
 [tool.semantic_release.commit_parser_options]
 minor_tags = ["feat", "feature"]
-patch_tags = ["fix", "bugfix", "improvement", "enhancement"]
+patch_tags = ["fix", "bugfix", "improvement", "enhancement", "update"]
 allowed_tags = [
     "feat",
     "feature",
@@ -79,6 +93,7 @@ allowed_tags = [
     "bugfix",
     "improvement",
     "enhancement",
+    "update",
 ]
 default_bump_level = 0
 parse_squash_commits = true

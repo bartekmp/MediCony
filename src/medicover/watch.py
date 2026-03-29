@@ -9,7 +9,11 @@ from src.id_value_util import IdsValues, IdValue
 WatchExclusions = Optional[dict[str, list[str]]]
 
 # Constants for general practitioner specialties
-GENERAL_PRACTITIONER_SPECIALTIES = [9, 1586, 7338]  # IDs of general practitioner specialties
+GENERAL_PRACTITIONER_SPECIALTIES = [
+    9,
+    1586,
+    7338,
+]  # IDs of general practitioner specialties
 GENERAL_PRACTITIONER_SPECIALTIES_STR = ",".join(
     map(str, GENERAL_PRACTITIONER_SPECIALTIES)
 )  # String representation of GP specialties
@@ -270,7 +274,9 @@ class Watch:
         )
 
     def is_active(
-        self, activity_threshold_days: int = 14, starting_point: Optional[datetime.date] = None
+        self,
+        activity_threshold_days: int = 14,
+        starting_point: Optional[datetime.date] = None,
     ) -> WatchActiveStatus:
         # Check if the watch is active based on the current date
         # If the watch's start date is in the future, it's not yet active or the end date is in the past, it is expired
@@ -285,7 +291,12 @@ class Watch:
 
     def _get_descriptive_info(self) -> dict[str, Any]:
         # Prepare a dictionary with watch description, containing all the relevant information and IDs
-        watch_description = {"id": self.id, "city": self.city, "type": self.type.value, "specialty": ""}
+        watch_description = {
+            "id": self.id,
+            "city": self.city,
+            "type": self.type.value,
+            "specialty": "",
+        }
 
         if self.region.value:
             watch_description["region"] = f"{self.region.value} ({self.region.id})"
@@ -329,7 +340,7 @@ class Watch:
 
     def __str__(self) -> str:
         d = self._get_descriptive_info()
-        return f"ID {d['id']}\nRegion: {d['region']}\nCity: {d['city']}\nType: {d['type']}\nSpecialty: {d['specialty']}\nClinic: {d['clinic']}\nDoctor: {d['doctor']}\nDate range: {d['start_date']}–{d['end_date']}\nTime range: {d['time_range']}\nAutobook: {bool(d["auto_book"])}\nExclusions: {d['exclusions']}\nAccount: {d['account']}"
+        return f"ID {d['id']}\nRegion: {d['region']}\nCity: {d['city']}\nType: {d['type']}\nSpecialty: {d['specialty']}\nClinic: {d['clinic']}\nDoctor: {d['doctor']}\nDate range: {d['start_date']}–{d['end_date']}\nTime range: {d['time_range']}\nAutobook: {bool(d['auto_book'])}\nExclusions: {d['exclusions']}\nAccount: {d['account']}"
 
     def short_str(self) -> str:
         d = self._get_descriptive_info()

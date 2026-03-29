@@ -34,7 +34,9 @@ def format_single_text_element(element: Appointment | Watch | str) -> str:
     return str(element) + "\n" + "-" * 50
 
 
-def format_elements_as_text(elements: list[Appointment] | list[Watch] | list[str]) -> str | None:
+def format_elements_as_text(
+    elements: list[Appointment] | list[Watch] | list[str],
+) -> str | None:
     if not len(elements):
         return None
 
@@ -63,7 +65,12 @@ def send_message(title: str | None, message: str):
     if title:
         message = f"<b>{title}</b>\n{message}"
     try:
-        r = telegram.notify(message=message, parse_mode="html", disable_web_page_preview=True, env_prefix=ENV_PREFIX)
+        r = telegram.notify(
+            message=message,
+            parse_mode="html",
+            disable_web_page_preview=True,
+            env_prefix=ENV_PREFIX,
+        )
     except BadArguments as e:
         log.error("Failed to send the notification")
         log.error(f"{e}")

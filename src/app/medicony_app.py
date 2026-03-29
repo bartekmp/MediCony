@@ -130,10 +130,22 @@ class MediCony:
         else:
             log.info("MedicineApp not initialized (command does not contain 'medicine' or is not 'start')")
 
-    async def daemon_mode(self, sleep_period_s: int, shutdown_event: asyncio.Event, wake_event: asyncio.Event | None = None):
+    async def daemon_mode(
+        self,
+        sleep_period_s: int,
+        shutdown_event: asyncio.Event,
+        wake_event: asyncio.Event | None = None,
+    ):
         log.info(f"Daemon mode. Sleep period: {sleep_period_s}s")
         if not self.medicover_app and not self.medicine_app:
             log.info("Neither MedicoverApp nor MedicineApp initialized, exiting daemon mode")
+            return
+
+        try:
+            log.info("Authenticating apps in daemon mode...")
+            await self.authenticate()
+        except Exception as e:
+            log.error(f"Authentication failed during daemon startup: {e}")
             return
 
         while not shutdown_event.is_set():
@@ -208,6 +220,38 @@ class MediCony:
             wake_event,
         )
 
+        from src.bot.mfa_provider import TelegramMfaProvider
+        from src.medicover.stdin_mfa_provider import stdin_mfa_provider
+
+        mfa_provider = TelegramMfaProvider(telegram_bot.bot, telegram_bot.dp)
+
+        async def dual_mfa_provider(channel: str):
+            t1 = asyncio.create_task(mfa_provider.request_code(channel))
+            t2 = asyncio.create_task(stdin_mfa_provider(channel))
+            done, pending = await asyncio.wait([t1, t2], return_when=asyncio.FIRST_COMPLETED)
+            for p in pending:
+                p.cancel()
+
+            # Use the result from the task that completed first
+            result_task = done.pop()
+            try:
+                # If t1 finished but raised an exception (e.g., timeout?), wait will still catch it
+                # We return whatever the first finished provider returned.
+                res = result_task.result()
+
+                # Visual cue if CLI lost the race.
+                if result_task == t1 and not t2.done():
+                    print("\n[MFA code provided via Telegram]")
+
+                return res
+            except Exception as e:
+                log.error(f"MFA provider resulted in error: {e}")
+                # Fallback to the other one if the first failed and hasn't been cancelled yet?
+                # For simplicity, returning None forces a failure.
+                return None
+
+        self.medicover_app.set_mfa_code_provider(dual_mfa_provider)
+
         # Run bot and main loop as cancellable tasks; cancel on shutdown for fast exit
         bot_task = asyncio.create_task(telegram_bot.dispatch_interactive_bot(shutdown_event))
         loop_task = asyncio.create_task(self.daemon_mode(sleep_period_s, shutdown_event, wake_event))
@@ -216,7 +260,8 @@ class MediCony:
         try:
             # Wait until either shutdown is requested or any task finishes
             done, pending = await asyncio.wait(
-                {bot_task, loop_task, shutdown_wait}, return_when=asyncio.FIRST_COMPLETED
+                {bot_task, loop_task, shutdown_wait},
+                return_when=asyncio.FIRST_COMPLETED,
             )
 
             # If shutdown requested, cancel running tasks

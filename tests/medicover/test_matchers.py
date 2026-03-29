@@ -179,7 +179,13 @@ class TestMatchSingleAppointmentToBeCanceled:
 class TestMatchSingleAppointment:
     """Test cases for the match_single_appointment function."""
 
-    def create_test_appointment(self, specialty_id=789, clinic_id=123, doctor_id=456, date_time="2025-03-15T10:00:00"):
+    def create_test_appointment(
+        self,
+        specialty_id=789,
+        clinic_id=123,
+        doctor_id=456,
+        date_time="2025-03-15T10:00:00",
+    ):
         """Helper method to create test appointment."""
         appointment_data = {
             "appointmentDate": date_time,
@@ -224,7 +230,13 @@ class TestMatchSingleAppointment:
         date_time = datetime.datetime.fromisoformat("2025-03-15T10:00:00")  # Same date, different time
 
         result = match_single_appointment(
-            789, 123, 456, date_time, appointments, exact_time_match=False, exact_date_match=True
+            789,
+            123,
+            456,
+            date_time,
+            appointments,
+            exact_time_match=False,
+            exact_date_match=True,
         )
         assert result == appointment
 
@@ -235,7 +247,13 @@ class TestMatchSingleAppointment:
         date_time = datetime.datetime.fromisoformat("2025-03-15T10:00:00")
 
         result = match_single_appointment(
-            789, 123, 456, date_time, appointments, exact_time_match=False, exact_date_match=False
+            789,
+            123,
+            456,
+            date_time,
+            appointments,
+            exact_time_match=False,
+            exact_date_match=False,
         )
         assert result == appointment
 
@@ -274,7 +292,13 @@ class TestMatchSingleAppointment:
 
         # When exact_time_match=True and exact_date_match=False, only exact time should matter
         result = match_single_appointment(
-            789, 123, 456, date_time, appointments, exact_time_match=True, exact_date_match=False
+            789,
+            123,
+            456,
+            date_time,
+            appointments,
+            exact_time_match=True,
+            exact_date_match=False,
         )
         assert result is None
 
@@ -297,7 +321,13 @@ class TestMatchSingleAppointment:
 
         # When exact_time_match=False and exact_date_match=True, only exact date should matter
         result = match_single_appointment(
-            789, 123, 456, date_time, appointments, exact_time_match=False, exact_date_match=True
+            789,
+            123,
+            456,
+            date_time,
+            appointments,
+            exact_time_match=False,
+            exact_date_match=True,
         )
         assert result is None
 
@@ -322,7 +352,13 @@ class TestMatchSingleAppointment:
 class TestMatchWithinDateRange:
     """Test cases for the match_within_date_range function."""
 
-    def create_test_appointment(self, specialty_id=789, clinic_id=123, doctor_id=456, date_time="2025-03-15T10:00:00"):
+    def create_test_appointment(
+        self,
+        specialty_id=789,
+        clinic_id=123,
+        doctor_id=456,
+        date_time="2025-03-15T10:00:00",
+    ):
         """Helper method to create test appointment."""
         appointment_data = {
             "appointmentDate": date_time,

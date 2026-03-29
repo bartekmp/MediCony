@@ -28,7 +28,10 @@ from src.bot.validation_utils import (
 )
 from src.logger import log
 from src.medicover.services.watch_service import WatchService
-from src.medicover.watch import GENERAL_PRACTITIONER_SPECIALTIES, GENERAL_PRACTITIONER_SPECIALTIES_LABEL
+from src.medicover.watch import (
+    GENERAL_PRACTITIONER_SPECIALTIES,
+    GENERAL_PRACTITIONER_SPECIALTIES_LABEL,
+)
 
 
 class AddWatchStates(StatesGroup):
@@ -47,7 +50,9 @@ class AddWatchStates(StatesGroup):
 
 
 def register_add_watch_handler(
-    dispatcher: Dispatcher, watch_service: WatchService, config: MediConyConfig | None = None
+    dispatcher: Dispatcher,
+    watch_service: WatchService,
+    config: MediConyConfig | None = None,
 ):
     router = Router()
     command_name = "/watch_add"
@@ -75,7 +80,11 @@ def register_add_watch_handler(
         if region_suggested:
             msg += f"\nSuggested choice: *{escape_markdown(region_suggested['label'])}*"
             buttons.append(region_suggested["label"])
-        await message.answer(msg, reply_markup=abort_keyboard(extra_buttons=buttons), parse_mode="MarkdownV2")
+        await message.answer(
+            msg,
+            reply_markup=abort_keyboard(extra_buttons=buttons),
+            parse_mode="MarkdownV2",
+        )
         await state.set_state(AddWatchStates.choosing_region)
 
     # Conditionally register account choosing handler only if needed to preserve handler ordering for tests
@@ -94,7 +103,11 @@ def register_add_watch_handler(
             if region_suggested:
                 msg += f"\nSuggested choice: *{escape_markdown(region_suggested['label'])}*"
                 buttons.append(region_suggested["label"])
-            await message.answer(msg, reply_markup=abort_keyboard(extra_buttons=buttons), parse_mode="MarkdownV2")
+            await message.answer(
+                msg,
+                reply_markup=abort_keyboard(extra_buttons=buttons),
+                parse_mode="MarkdownV2",
+            )
             await state.set_state(AddWatchStates.choosing_region)
 
     @router.message(AddWatchStates.choosing_region)
@@ -117,7 +130,9 @@ def register_add_watch_handler(
                 msg += f"\nSuggested choice: *{escape_markdown(region_suggested['label'])}*"
                 buttons.append(region_suggested["label"])
             await message.answer(
-                msg, reply_markup=abort_and_skip_keyboard(extra_buttons=buttons), parse_mode="MarkdownV2"
+                msg,
+                reply_markup=abort_and_skip_keyboard(extra_buttons=buttons),
+                parse_mode="MarkdownV2",
             )
             return
         await state.update_data(region=region)
@@ -127,7 +142,11 @@ def register_add_watch_handler(
         if city_suggested:
             msg += f"\nSuggested choice: *{city_suggested}*"
             buttons.append(city_suggested)
-        await message.answer(msg, reply_markup=abort_and_skip_keyboard(extra_buttons=buttons), parse_mode="MarkdownV2")
+        await message.answer(
+            msg,
+            reply_markup=abort_and_skip_keyboard(extra_buttons=buttons),
+            parse_mode="MarkdownV2",
+        )
         await state.set_state(AddWatchStates.choosing_city)
 
     @router.message(AddWatchStates.choosing_city)
@@ -198,7 +217,10 @@ def register_add_watch_handler(
         specialty_id = specialty_ids[0] if isinstance(specialty_ids, list) and specialty_ids else specialty_ids
         doctors = await watch_service.list_available_filters("doctors", region=region, specialty=specialty_id)
         if available_doctors := "".join([f"  *{d['id']}* : {escape_markdown(d['value'])}\n" for d in doctors]):
-            await message.answer("💡 Available doctors in given region:\n" + available_doctors, parse_mode="MarkdownV2")
+            await message.answer(
+                "💡 Available doctors in given region:\n" + available_doctors,
+                parse_mode="MarkdownV2",
+            )
 
         doctor_ids = [d["id"] for d in doctors] if doctors else []
         await message.answer(
@@ -237,7 +259,10 @@ def register_add_watch_handler(
         specialty_id = specialty_ids[0] if isinstance(specialty_ids, list) and specialty_ids else specialty_ids
         clinics = await watch_service.list_available_filters("clinics", region=region, specialty=specialty_id)
         if available_clinics := "".join([f"  *{c['id']}* : {escape_markdown(c['value'])}\n" for c in clinics]):
-            await message.answer("💡 Available clinics in given region:\n" + available_clinics, parse_mode="MarkdownV2")
+            await message.answer(
+                "💡 Available clinics in given region:\n" + available_clinics,
+                parse_mode="MarkdownV2",
+            )
 
         clinic_ids = [c["id"] for c in clinics]
         await message.answer(
@@ -344,7 +369,11 @@ def register_add_watch_handler(
                 return
 
         await state.update_data(end_date=end_date)
-        await ask_with_skip(message, "time range", "HH:MM-HH:MM, or just HH:MM for endless (up to 23:59:59)")
+        await ask_with_skip(
+            message,
+            "time range",
+            "HH:MM-HH:MM, or just HH:MM for endless (up to 23:59:59)",
+        )
         await state.set_state(AddWatchStates.choosing_auto_book)
 
     @router.message(AddWatchStates.choosing_auto_book)

@@ -140,8 +140,18 @@ def register_edit_medicine_handler(dispatcher: Dispatcher, medicine_service: Med
         await state.set_state(None)
 
     @router.message(
-        lambda message: message.text
-        in ["name", "dosage", "amount", "location", "radius_km", "max_price", "min_availability"]
+        lambda message: (
+            message.text
+            in [
+                "name",
+                "dosage",
+                "amount",
+                "location",
+                "radius_km",
+                "max_price",
+                "min_availability",
+            ]
+        )
     )
     async def process_field_selection(message: types.Message, state: FSMContext):
         if not message.text:
@@ -156,7 +166,10 @@ def register_edit_medicine_handler(dispatcher: Dispatcher, medicine_service: Med
         medicine = data.get("medicine")
 
         if not medicine:
-            await message.answer("❌ Error: Medicine not found. Please start over.", reply_markup=ReplyKeyboardRemove())
+            await message.answer(
+                "❌ Error: Medicine not found. Please start over.",
+                reply_markup=ReplyKeyboardRemove(),
+            )
             await state.clear()
             log.info(f"↩ Failed command: {command_name} (medicine not found)")
             return
@@ -207,7 +220,10 @@ def register_edit_medicine_handler(dispatcher: Dispatcher, medicine_service: Med
             return
 
         if is_skip(message.text or ""):
-            await message.answer("❌ Medicine name cannot be empty", reply_markup=abort_and_skip_keyboard())
+            await message.answer(
+                "❌ Medicine name cannot be empty",
+                reply_markup=abort_and_skip_keyboard(),
+            )
             return
 
         name = validate_str(message.text or "", min_length=1, max_length=100)
@@ -289,7 +305,8 @@ def register_edit_medicine_handler(dispatcher: Dispatcher, medicine_service: Med
         radius_km = validate_float(message.text or "", min_value=0.1, max_value=100.0)
         if radius_km is None:
             await message.answer(
-                "❌ Invalid radius (must be between 0.1 and 100 km)", reply_markup=abort_and_skip_keyboard()
+                "❌ Invalid radius (must be between 0.1 and 100 km)",
+                reply_markup=abort_and_skip_keyboard(),
             )
             return
 
@@ -309,7 +326,8 @@ def register_edit_medicine_handler(dispatcher: Dispatcher, medicine_service: Med
             max_price = validate_float(message.text or "", min_value=0.01, max_value=10000.0)
             if max_price is None:
                 await message.answer(
-                    "❌ Invalid price (must be between 0.01 and 10000)", reply_markup=abort_and_skip_keyboard()
+                    "❌ Invalid price (must be between 0.01 and 10000)",
+                    reply_markup=abort_and_skip_keyboard(),
                 )
                 return
 
@@ -325,7 +343,10 @@ def register_edit_medicine_handler(dispatcher: Dispatcher, medicine_service: Med
             return
 
         if is_skip(message.text or ""):
-            await message.answer("❌ Min availability cannot be empty", reply_markup=abort_and_skip_keyboard())
+            await message.answer(
+                "❌ Min availability cannot be empty",
+                reply_markup=abort_and_skip_keyboard(),
+            )
             return
 
         valid_availability = ["low", "high", "none"]
@@ -358,7 +379,10 @@ def register_edit_medicine_handler(dispatcher: Dispatcher, medicine_service: Med
             # Get the new value based on field
             data_key = f"new_{field}"
             if data_key not in data:
-                await message.answer("❌ Error: Missing value for field", reply_markup=ReplyKeyboardRemove())
+                await message.answer(
+                    "❌ Error: Missing value for field",
+                    reply_markup=ReplyKeyboardRemove(),
+                )
                 await state.clear()
                 log.info(f"↩ Failed command: {command_name} (missing value)")
                 return

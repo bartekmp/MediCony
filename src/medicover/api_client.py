@@ -5,7 +5,11 @@ from src.http_client import HTTPClient
 from src.logger import log
 from src.medicover.appointment import Appointment
 from src.medicover.auth import Authenticator
-from src.medicover.matchers import is_excluded, match_single_appointment, match_single_appointment_to_be_canceled
+from src.medicover.matchers import (
+    is_excluded,
+    match_single_appointment,
+    match_single_appointment_to_be_canceled,
+)
 from src.medicover.watch import Watch, WatchExclusions, WatchType
 
 
@@ -27,8 +31,11 @@ class MediAPI:
         if alias not in self._accounts:
             self._accounts[alias] = (authenticator, HTTPClient(authenticator))
 
-    def add_account(self, alias: str, username: str, password: str):
-        self._add_account_internal(alias, Authenticator(f"{username}:{password}"))
+    def add_account(self, alias: str, username: str, password: str, mfa_code_provider=None):
+        self._add_account_internal(
+            alias,
+            Authenticator(f"{username}:{password}", mfa_code_provider=mfa_code_provider),
+        )
 
     async def use_account(self, alias: str):
         if alias not in self._accounts:
@@ -84,7 +91,9 @@ class MediAPI:
         return appts
 
     async def book_appointment(
-        self, appointment_to_book: Appointment, appointment_type: WatchType = WatchType.STANDARD
+        self,
+        appointment_to_book: Appointment,
+        appointment_type: WatchType = WatchType.STANDARD,
     ) -> Appointment | None:
         prices_url = "https://api-gateway-online24.medicover.pl/payment-gateway/api/v1/visit-prices"
         booking_url = "https://api-gateway-online24.medicover.pl/appointments/api/search-appointments/book-appointment"
@@ -146,7 +155,13 @@ class MediAPI:
             return None
 
         appointment_to_book = match_single_appointment(
-            specialty, clinic, doctor, date, found_appointments, exact_time_match, exact_date_match
+            specialty,
+            clinic,
+            doctor,
+            date,
+            found_appointments,
+            exact_time_match,
+            exact_date_match,
         )
         if not appointment_to_book:
             log.error(f"No appointment found matching criteria: {specialty}, {clinic}, {doctor}, {date}")
@@ -235,7 +250,10 @@ class MediAPI:
             return False
 
     async def find_filters(
-        self, region: int | None = None, specialty: int | None = None, search_type: WatchType = WatchType.STANDARD
+        self,
+        region: int | None = None,
+        specialty: int | None = None,
+        search_type: WatchType = WatchType.STANDARD,
     ) -> dict:
         filters_url = "https://api-gateway-online24.medicover.pl/appointments/api/search-appointments/filters"
         params = {"SlotSearchType": search_type.value}

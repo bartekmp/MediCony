@@ -6,6 +6,7 @@ import re
 import string
 import time
 import uuid
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from urllib.parse import parse_qs, urljoin, urlparse
 
@@ -30,6 +31,18 @@ class TokenExchangeError(requests.RequestException):
     pass
 
 
+class MfaGateError(Exception):
+    """Raised when the MFA gate cannot be skipped and MFA setup is required by Medicover."""
+
+    pass
+
+
+class MfaVerificationError(Exception):
+    """Raised when MFA 2FA code verification fails (timeout, wrong code, or no provider)."""
+
+    pass
+
+
 def parse_userdata(userdata: str) -> Userdata:
     # Userdata format: "username:password"
     if ":" not in userdata:
@@ -39,7 +52,11 @@ def parse_userdata(userdata: str) -> Userdata:
 
 
 class Authenticator:
-    def __init__(self, userdata: str):
+    def __init__(
+        self,
+        userdata: str,
+        mfa_code_provider: Callable[[str], Awaitable[str | None]] | None = None,
+    ):
         self.userdata = parse_userdata(userdata)
         self.session = None
         # Default headers for the requests, with a randomized real user agent
@@ -49,6 +66,9 @@ class Authenticator:
             "Authorization": None,
         }
         self.bearerToken = None
+        # Optional async callback to request MFA 2FA codes from the user (e.g., via Telegram or stdin).
+        # Signature: async (channel: str) -> str | None — returns the 6-digit code or None on timeout/abort.
+        self.mfa_code_provider = mfa_code_provider
 
     async def slack_get(self, url: str, **kwargs) -> requests.Response:
         """
@@ -112,7 +132,11 @@ class Authenticator:
             log.log_to_file("ERROR", f"Invalid MFA page response: {mfa_selection_page.text}")
             raise ValueError("MFA skip form fields were empty")
 
-        skip_action_url = str(skip_button.get("formaction")) if skip_button and skip_button.get("formaction") else "/Account/MfaGate?handler=SkipMfaGate"
+        skip_action_url = (
+            str(skip_button.get("formaction"))
+            if skip_button and skip_button.get("formaction")
+            else "/Account/MfaGate?handler=SkipMfaGate"
+        )
         skip_endpoint = urljoin(login_url, skip_action_url)
         mfa_skip_data = {
             "Input.ReturnUrl": return_url,
@@ -134,7 +158,117 @@ class Authenticator:
             log.error(f"Failed to skip MFA gate, status code: {response.status_code}")
             raise requests.RequestException(f"Failed to skip MFA gate, status code: {response.status_code}")
 
-        return response.headers.get("Location")
+        redirect_url = response.headers.get("Location")
+        if not redirect_url or redirect_url == "/":
+            log.error(
+                "MFA gate skip was acknowledged by the server but did not redirect to the OAuth callback. "
+                "This likely means Medicover no longer allows skipping MFA setup. "
+                "Please enable MFA on your Medicover account at https://online24.medicover.pl"
+            )
+            raise MfaGateError(
+                "MFA gate cannot be skipped — Medicover requires MFA to be enabled. "
+                "Please set up MFA on your Medicover account to continue using MediCony."
+            )
+        return redirect_url
+
+    async def handle_mfa_verification(self, mfa_redirect_url: str) -> str:
+        """
+        Handle the MFA 2FA code verification page (/Account/Mfa).
+        Fetches the verification page, requests a code from the user via the mfa_code_provider,
+        submits the code with the device marked as trusted, and returns the post-verification redirect URL.
+        """
+        if self.session is None:
+            raise ValueError("Session is not initialized, call login() first")
+        if not self.mfa_code_provider:
+            raise MfaVerificationError(
+                "MFA verification is required but no code provider is configured. "
+                "Run MediCony in daemon mode with the Telegram bot, or configure an MFA code provider."
+            )
+
+        login_url = "https://login-online24.medicover.pl"
+
+        # Fetch the MFA verification page
+        mfa_page = await self.slack_get(f"{login_url}{mfa_redirect_url}", allow_redirects=True)
+        soup = BeautifulSoup(mfa_page.text, "html.parser")
+
+        # Extract form fields
+        form = soup.find("form")
+        if not form:
+            log.log_to_file("ERROR", f"No form found on MFA verification page: {mfa_page.text}")
+            raise MfaVerificationError("MFA verification page did not contain a form")
+
+        form_action = form.get("action", "")
+        csrf_input = soup.find("input", {"name": "__RequestVerificationToken"})
+        return_url_input = soup.find("input", {"name": "Input.ReturnUrl"})
+        mfa_code_id_input = soup.find("input", {"name": "Input.MfaCodeId"})
+        channel_input = soup.find("input", {"name": "Input.Channel"})
+        operation_input = soup.find("input", {"name": "Input.Operation"})
+        device_name_input = soup.find("input", {"name": "Input.DeviceName"})
+
+        if not csrf_input or not return_url_input or not mfa_code_id_input:
+            log.log_to_file("ERROR", f"Missing MFA form fields: {mfa_page.text}")
+            raise MfaVerificationError("Failed to extract required MFA verification form fields")
+
+        csrf_token = csrf_input.get("value", "")
+        return_url = return_url_input.get("value", "")
+        mfa_code_id = mfa_code_id_input.get("value", "")
+        channel = channel_input.get("value") or "Email" if channel_input else "Email"
+        operation = operation_input.get("value") or "SIGN_IN" if operation_input else "SIGN_IN"
+        device_name = device_name_input.get("value") or "MediCony" if device_name_input else "MediCony"
+
+        log.info(f"MFA verification required, code sent to you via {channel}")
+
+        # Request the code from the user via the provider
+        mfa_code = await self.mfa_code_provider(channel)
+        if not mfa_code:
+            raise MfaVerificationError("MFA verification aborted: no code was provided (timeout or user cancelled)")
+
+        # Strip whitespace and validate format
+        mfa_code = mfa_code.strip()
+        if not re.match(r"^\d{6}$", mfa_code):
+            raise MfaVerificationError(f"Invalid MFA code format: expected 6 digits, got '{mfa_code}'")
+
+        # Submit the verification form
+        mfa_submit_data = {
+            "Input.MfaCodeId": mfa_code_id,
+            "Input.ReturnUrl": return_url,
+            "Input.DeviceName": device_name,
+            "Input.MfaCode": mfa_code,
+            "Input.IsTrustedDevice": "True",
+            "Input.Channel": channel,
+            "Input.Operation": operation,
+            "Input.Button": "confirm",
+            "__RequestVerificationToken": csrf_token,
+        }
+        mfa_submit_headers = {
+            **self.headers,
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Origin": login_url,
+            "Referer": mfa_page.url if hasattr(mfa_page, "url") else f"{login_url}{mfa_redirect_url}",
+        }
+        form_endpoint = urljoin(login_url, form_action)
+        response = self.session.post(
+            form_endpoint,
+            data=mfa_submit_data,
+            headers=mfa_submit_headers,
+            allow_redirects=False,
+        )
+
+        if response.status_code == 302:
+            redirect_url = response.headers.get("Location")
+            if not redirect_url:
+                raise MfaVerificationError("MFA verification succeeded but no redirect URL was provided")
+            log.info("MFA verification successful (302 redirect), device marked as trusted")
+            return redirect_url
+
+        # A 200 OK means the server rejected the code and re-rendered the MFA form w/ validation errors
+        log.error(f"MFA code verification failed, status code: {response.status_code}")
+        log.log_to_file("ERROR", f"MFA verification response: {response.text}")
+        raise MfaVerificationError(
+            f"MFA code verification failed (status {response.status_code}). "
+            "The code was rejected by the server (likely incorrect or expired). "
+            "Note: Medicover uses 302 for success and 200 to re-render the form on validation errors."
+        )
 
     async def login(self):
         self.session = requests.Session()
@@ -174,7 +308,7 @@ class Authenticator:
         # Construct the redirection URL to acces the authorization form
         next_url = (
             # Attach the timestamp in ISO format to the redirection URL
-            f"{response.headers.get("Location")}%26ts%3D{int(time.time_ns() / 1000000)}"
+            f"{response.headers.get('Location')}%26ts%3D{int(time.time_ns() / 1000000)}"
         )
 
         # Get the authorization form page
@@ -216,6 +350,10 @@ class Authenticator:
             if not next_url:
                 log.error("MFA gate was detected but no redirection URL was provided after skipping it")
                 raise ValueError("MFA gate was detected but no redirection URL was provided after skipping it")
+
+        # Handle MFA 2FA code verification (/Account/Mfa — distinct from /Account/MfaGate)
+        if "Account/Mfa" in next_url and "MfaGate" not in next_url:
+            next_url = await self.handle_mfa_verification(next_url)
 
         # Fetch authorization code by parsing query string from the next redirection URL
         response = await self.slack_get(f"{login_url}{next_url}", allow_redirects=False)

@@ -104,17 +104,15 @@ class Appointment:
         lines = []
         if self.database_row_id:
             lines.append(f"ID: {self.database_row_id}")
-        lines.extend(
-            [
-                f"Date: {self.date_time}",
-                f"Clinic: {self.clinic.value}",
-                f"Doctor: {self.doctor.value}",
-                f"Specialty: {self.specialty.value}",
-                f"Type: {self.visit_type}",
-                f"Booked: {'No' if self.booking_identifier is None else 'Yes (ID: ' + str(self.booking_identifier) + ')'}",
-                f"Account: {self.account if self.account else 'N/A'}",
-            ]
-        )
+        lines.extend([
+            f"Date: {self.date_time}",
+            f"Clinic: {self.clinic.value}",
+            f"Doctor: {self.doctor.value}",
+            f"Specialty: {self.specialty.value}",
+            f"Type: {self.visit_type}",
+            f"Booked: {'No' if self.booking_identifier is None else 'Yes (ID: ' + str(self.booking_identifier) + ')'}",
+            f"Account: {self.account if self.account else 'N/A'}",
+        ])
         return "\n".join(lines)
 
     def notification_str(self) -> list[str]:

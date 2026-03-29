@@ -14,8 +14,10 @@ from src.parse_args import command_line_parser
 # Load environment variables
 load_dotenv()
 
+
 def _make_signal_handler(shutdown_event: asyncio.Event):
     """Create a signal handler that sets the provided shutdown event."""
+
     def _handler(signum, frame):
         log.info(f"Received signal {signum}. Initiating graceful shutdown...")
         shutdown_event.set()
@@ -49,7 +51,9 @@ async def main():
     log.info("")
 
     medicony = MediCony(config, args)
-    await medicony.authenticate()
+
+    if args.command != "start":
+        await medicony.authenticate()
 
     match args.command:
         case "find-appointment":

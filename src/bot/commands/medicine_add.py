@@ -9,7 +9,13 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import ReplyKeyboardRemove
 from pharmaradar import Medicine, MedicineWatchdog
 
-from src.bot.shared_utils import abort_and_skip_keyboard, abort_keyboard, id_keyboard, is_abort, is_skip
+from src.bot.shared_utils import (
+    abort_and_skip_keyboard,
+    abort_keyboard,
+    id_keyboard,
+    is_abort,
+    is_skip,
+)
 from src.bot.validation_utils import validate_float, validate_str
 from src.logger import log
 
@@ -37,7 +43,7 @@ def register_add_medicine_handler(dispatcher: Dispatcher, medicine_service: Medi
             log.info(f"User {message.from_user.id} started adding medicine")
         await state.set_state(AddMedicineStates.choosing_name)
         await message.answer(
-            "🏥 Add Medicine Search\n\n" "Let's add a new medicine to search for.\n\n" "What's the medicine name?",
+            "🏥 Add Medicine Search\n\nLet's add a new medicine to search for.\n\nWhat's the medicine name?",
             reply_markup=abort_keyboard(),
         )
 
@@ -60,7 +66,7 @@ def register_add_medicine_handler(dispatcher: Dispatcher, medicine_service: Medi
         await state.update_data(name=name)
         await state.set_state(AddMedicineStates.choosing_dosage)
         await message.answer(
-            f"Medicine: {name}\n\n" "What's a single dosage? (e.g., 500 mg, 10 ml)\n" "Select Skip if not applicable.",
+            f"Medicine: {name}\n\nWhat's a single dosage? (e.g., 500 mg, 10 ml)\nSelect Skip if not applicable.",
             reply_markup=abort_and_skip_keyboard(),
         )
 
@@ -121,7 +127,7 @@ def register_add_medicine_handler(dispatcher: Dispatcher, medicine_service: Medi
         await state.update_data(location=location)
         await state.set_state(AddMedicineStates.choosing_radius)
         await message.answer(
-            "📏 What's the search radius in kilometers? (default: 5.0)\n" "Select Skip to use default.",
+            "📏 What's the search radius in kilometers? (default: 5.0)\nSelect Skip to use default.",
             reply_markup=abort_and_skip_keyboard(),
         )
 
@@ -136,13 +142,16 @@ def register_add_medicine_handler(dispatcher: Dispatcher, medicine_service: Medi
         if message.text and not is_skip(message.text):
             radius_km = validate_float(message.text, min_value=0.1, max_value=100.0)
             if radius_km is None:
-                await message.answer("❌ Invalid radius (0.1-100 km)", reply_markup=abort_and_skip_keyboard())
+                await message.answer(
+                    "❌ Invalid radius (0.1-100 km)",
+                    reply_markup=abort_and_skip_keyboard(),
+                )
                 return
 
         await state.update_data(radius_km=radius_km)
         await state.set_state(AddMedicineStates.choosing_max_price)
         await message.answer(
-            "💰 What's the maximum price in zł? (optional)\n" "Select Skip if no price limit.",
+            "💰 What's the maximum price in zł? (optional)\nSelect Skip if no price limit.",
             reply_markup=abort_and_skip_keyboard(),
         )
 
@@ -157,7 +166,10 @@ def register_add_medicine_handler(dispatcher: Dispatcher, medicine_service: Medi
         if message.text and not is_skip(message.text):
             max_price = validate_float(message.text, min_value=0.01, max_value=10000.0)
             if max_price is None:
-                await message.answer("❌ Invalid price (0.01-10000 zł)", reply_markup=abort_and_skip_keyboard())
+                await message.answer(
+                    "❌ Invalid price (0.01-10000 zł)",
+                    reply_markup=abort_and_skip_keyboard(),
+                )
                 return
 
         await state.update_data(max_price=max_price)
@@ -244,7 +256,7 @@ def register_add_medicine_handler(dispatcher: Dispatcher, medicine_service: Medi
 
             if result:
                 await message.answer(
-                    f"✅ Medicine search added successfully!\n\n" f"💊 {medicine.full_name} in {data['location']}",
+                    f"✅ Medicine search added successfully!\n\n💊 {medicine.full_name} in {data['location']}",
                     reply_markup=ReplyKeyboardRemove(),
                 )
                 if message.from_user:
