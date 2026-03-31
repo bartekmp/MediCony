@@ -228,27 +228,41 @@ class MediCony:
         async def dual_mfa_provider(channel: str):
             t1 = asyncio.create_task(mfa_provider.request_code(channel))
             t2 = asyncio.create_task(stdin_mfa_provider(channel))
-            done, pending = await asyncio.wait([t1, t2], return_when=asyncio.FIRST_COMPLETED)
-            for p in pending:
-                p.cancel()
+            tasks = {t1, t2}
 
-            # Use the result from the task that completed first
-            result_task = done.pop()
-            try:
-                # If t1 finished but raised an exception (e.g., timeout?), wait will still catch it
-                # We return whatever the first finished provider returned.
-                res = result_task.result()
+            while tasks:
+                done, tasks = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
+                result_task = done.pop()
+                try:
+                    res = result_task.result()
+                except Exception as e:
+                    log.error(f"MFA provider resulted in error: {e}")
+                    res = None
 
-                # Visual cue if CLI lost the race.
-                if result_task == t1 and not t2.done():
-                    print("\n[MFA code provided via Telegram]")
+                if res is not None:
+                    # Got a valid code — cancel the remaining provider(s) and return
+                    for p in tasks:
+                        p.cancel()
+                    for p in tasks:
+                        try:
+                            await p
+                        except (asyncio.CancelledError, Exception):
+                            pass
 
-                return res
-            except Exception as e:
-                log.error(f"MFA provider resulted in error: {e}")
-                # Fallback to the other one if the first failed and hasn't been cancelled yet?
-                # For simplicity, returning None forces a failure.
-                return None
+                    # Visual cue if CLI lost the race
+                    if result_task == t1:
+                        print("\n[MFA code provided via Telegram]")
+
+                    return res
+
+                # The first provider returned None (e.g., stdin EOFError in Docker).
+                # Fall through to wait for the remaining provider(s).
+                if tasks:
+                    log.info("First MFA provider returned no code, waiting for the other provider...")
+
+            # All providers exhausted without a valid code
+            log.error("All MFA providers failed to return a code")
+            return None
 
         self.medicover_app.set_mfa_code_provider(dual_mfa_provider)
 
