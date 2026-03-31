@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v2.1.1 (2026-03-31)
+
+### Bug Fixes
+
+- Race condition on mfa code accepting ([#75](https://github.com/bartekmp/MediCony/pull/75),
+  [`3b97f60`](https://github.com/bartekmp/MediCony/commit/3b97f60df8a24f25040de83d25db8fcdb140e77b))
+
+
 ## v2.1.0 (2026-03-29)
 
 ### Features
