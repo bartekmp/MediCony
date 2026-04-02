@@ -60,14 +60,38 @@ def skip_if_no_real_userdata(setup_environment):
 
 
 @pytest.fixture(scope="function")
-async def api_client(skip_if_no_real_userdata, env_vars):
-    from src.medicover.api_client import MediAPI
-    from src.medicover.auth import Authenticator, MfaVerificationError
+def real_authenticator(skip_if_no_real_userdata, env_vars, db_client):
+    from src.medicover.auth import Authenticator
     from src.medicover.stdin_mfa_provider import stdin_mfa_provider
+    from src.config import parse_medicover_accounts
 
-    authenticator = Authenticator(env_vars["user_data"])
-    authenticator.mfa_code_provider = stdin_mfa_provider
-    api_client = MediAPI(authenticator)
+    accounts, default_alias = parse_medicover_accounts(os.environ.get("MEDICOVER_USERDATA", ""))
+    sess = db_client.get_account_session(default_alias) if default_alias else None
+
+    # If the DB is ephemeral (like in Jenkins), fallback to testing environment variables
+    dev_id = sess[0] if sess else os.environ.get("MEDICONY_TEST_DEVICE_ID")
+    ref_tok = sess[1] if sess else os.environ.get("MEDICONY_TEST_REFRESH_TOKEN")
+
+    def session_save_cb(d_id, r_tok):
+        if default_alias:
+            db_client.save_account_session(default_alias, d_id, r_tok)
+
+    authenticator = Authenticator(
+        env_vars["user_data"],
+        mfa_code_provider=stdin_mfa_provider,
+        device_id=dev_id,
+        refresh_token=ref_tok,
+        session_save_callback=session_save_cb,
+    )
+    return authenticator
+
+
+@pytest.fixture(scope="function")
+async def api_client(real_authenticator):
+    from src.medicover.api_client import MediAPI
+    from src.medicover.auth import MfaVerificationError
+
+    api_client = MediAPI(real_authenticator)
 
     try:
         await api_client.authenticate()

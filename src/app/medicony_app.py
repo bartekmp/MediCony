@@ -137,6 +137,13 @@ class MediCony:
         wake_event: asyncio.Event | None = None,
     ):
         log.info(f"Daemon mode. Sleep period: {sleep_period_s}s")
+
+        if self.config.persist_login_sessions and not self.config.encryption_key:
+            log.warning(
+                "MEDICONY_ENCRYPTION_KEY is not set! The authentication session refresh tokens will be stored in plain text in the database. "
+                "It is highly recommended to set this variable in your .env file to enable encryption."
+            )
+
         if not self.medicover_app and not self.medicine_app:
             log.info("Neither MedicoverApp nor MedicineApp initialized, exiting daemon mode")
             return

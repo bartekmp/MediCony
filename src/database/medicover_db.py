@@ -7,18 +7,33 @@ from typing import List, Optional, Tuple
 
 from sqlalchemy import and_
 from sqlalchemy.exc import SQLAlchemyError
+from cryptography.fernet import Fernet, InvalidToken
 
+from src.config import get_config
 from src.database.base_db import BaseDbLogic
 from src.logger import log
 from src.medicover.appointment import Appointment as MedicoverAppointment
 from src.medicover.watch import Watch as MedicoverWatch
 from src.medicover.watch import flatten_exclusions
-from src.models import MedicoverAppointmentModel, MedicoverWatchModel
+from src.models import (
+    MedicoverAccountSessionModel,
+    MedicoverAppointmentModel,
+    MedicoverWatchModel,
+)
 
 
 class MedicoverDbLogic(BaseDbLogic):
     def __init__(self):
         super().__init__()
+
+        self._fernet = None
+        encryption_key = get_config().encryption_key
+        if encryption_key:
+            try:
+                self._fernet = Fernet(encryption_key.encode("utf-8"))
+            except Exception as e:
+                log.error(f"Invalid MEDICONY_ENCRYPTION_KEY provided: {e}")
+
         self.clear_db()
 
     def clear_db(self):
@@ -50,8 +65,7 @@ class MedicoverDbLogic(BaseDbLogic):
             try:
                 with self.get_session() as session:
                     result = (
-                        session
-                        .query(MedicoverAppointmentModel)
+                        session.query(MedicoverAppointmentModel)
                         .filter(
                             and_(
                                 MedicoverAppointmentModel.clinic == appointment.clinic.id,
@@ -72,8 +86,7 @@ class MedicoverDbLogic(BaseDbLogic):
             try:
                 with self.get_session() as session:
                     appointments = (
-                        session
-                        .query(MedicoverAppointmentModel)
+                        session.query(MedicoverAppointmentModel)
                         .filter(MedicoverAppointmentModel.bookingIdentifier.isnot(None))
                         .all()
                     )
@@ -145,8 +158,7 @@ class MedicoverDbLogic(BaseDbLogic):
             try:
                 with self.get_session() as session:
                     existing = (
-                        session
-                        .query(MedicoverAppointmentModel)
+                        session.query(MedicoverAppointmentModel)
                         .filter(
                             and_(
                                 MedicoverAppointmentModel.clinic == appointment.clinic.id,
@@ -199,7 +211,7 @@ class MedicoverDbLogic(BaseDbLogic):
                         endDate=watch.end_date if watch.end_date else None,
                         timeRange=str(watch.time_range) if watch.time_range else None,
                         autobook=watch.auto_book,
-                        exclusions=flatten_exclusions(watch.exclusions) if watch.exclusions else None,
+                        exclusions=(flatten_exclusions(watch.exclusions) if watch.exclusions else None),
                         type=str(watch.type.value) if watch.type else None,
                         account=watch.account,
                     )
@@ -326,3 +338,64 @@ class MedicoverDbLogic(BaseDbLogic):
             except SQLAlchemyError as e:
                 log.error(f"Error updating watch: {e}")
                 return False
+
+    def get_account_session(self, account: str) -> Optional[Tuple[str, str]]:
+        """Get the stored session (device_id, refresh_token) for an account. Decrypts if configured."""
+        with self._lock:
+            try:
+                with self.get_session() as session:
+                    res = (
+                        session.query(MedicoverAccountSessionModel)
+                        .filter(MedicoverAccountSessionModel.account == account)
+                        .first()
+                    )
+                    if res and res.deviceId and res.refreshToken:
+                        refresh_token = res.refreshToken
+                        if self._fernet:
+                            try:
+                                refresh_token = self._fernet.decrypt(refresh_token.encode("utf-8")).decode("utf-8")
+                            except InvalidToken:
+                                log.error(
+                                    "Failed to decrypt the refresh token! The configured MEDICONY_ENCRYPTION_KEY doesn't match the one used to encrypt it, or the token was stored as plain-text before the key was added. Deleting invalid session..."
+                                )
+                                session.delete(res)
+                                session.commit()
+                                return None
+                            except Exception as e:
+                                log.error(f"Failed to decrypt the refresh token: {e}")
+                                return None
+
+                        return (res.deviceId, refresh_token)
+                    return None
+            except SQLAlchemyError as e:
+                log.error(f"Error getting account session: {e}")
+                return None
+
+    def save_account_session(self, account: str, device_id: str, refresh_token: str):
+        """Save the session (device_id, refresh_token) for an account. Encrypts if configured."""
+        with self._lock:
+            try:
+                stored_refresh_token = refresh_token
+                if self._fernet:
+                    stored_refresh_token = self._fernet.encrypt(refresh_token.encode("utf-8")).decode("utf-8")
+
+                with self.get_session() as session:
+                    existing = (
+                        session.query(MedicoverAccountSessionModel)
+                        .filter(MedicoverAccountSessionModel.account == account)
+                        .first()
+                    )
+                    if existing:
+                        existing.deviceId = device_id
+                        existing.refreshToken = stored_refresh_token
+                    else:
+                        new_session = MedicoverAccountSessionModel(
+                            account=account,
+                            deviceId=device_id,
+                            refreshToken=stored_refresh_token,
+                        )
+                        session.add(new_session)
+                    session.commit()
+            except SQLAlchemyError as e:
+                log.error(f"Error saving account session: {e}")
+                raise

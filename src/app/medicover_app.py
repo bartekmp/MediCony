@@ -39,16 +39,33 @@ class MedicoverApp:
         # Determine initial account alias (CLI supplied or default)
         self.default_account = getattr(args, "account", None) or config.medicover_default_account
 
+        def session_save_callback_factory(acc_alias):
+            return lambda device_id, refresh_token: self.db_client.save_account_session(
+                acc_alias, device_id, refresh_token
+            )
+
+        def get_auth_kwargs(alias: str):
+            kwargs = {"mfa_code_provider": stdin_mfa_provider}
+            if self.config.persist_login_sessions:
+                sess = self.db_client.get_account_session(alias)
+                dev_id, ref_tok = sess if sess else (None, None)
+                kwargs.update({
+                    "device_id": dev_id,
+                    "refresh_token": ref_tok,
+                    "session_save_callback": session_save_callback_factory(alias),
+                })
+            return kwargs
+
         # Initialize MediAPI with default account authenticator and register others lazily
         user, pwd = config.get_account(self.default_account)
         self.api_client = MediAPI(
-            Authenticator(f"{user}:{pwd}", mfa_code_provider=stdin_mfa_provider),
+            Authenticator(f"{user}:{pwd}", **get_auth_kwargs(self.default_account)),
             alias=self.default_account,
         )
         # Register additional accounts for lazy use
         for alias, (u, p) in config.medicover_accounts.items():
             if alias != self.default_account:
-                self.api_client.add_account(alias, u, p, mfa_code_provider=stdin_mfa_provider)
+                self.api_client.add_account(alias, u, p, **get_auth_kwargs(alias))
 
         # Services depending on API/DB
         self.watch_service = WatchService(self.api_client, self.db_client)  # type: ignore[arg-type]

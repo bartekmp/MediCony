@@ -2,7 +2,7 @@
 
 import pytest
 
-from src.config import parse_medicover_accounts
+from src.config import MediConyConfig, parse_medicover_accounts
 
 
 def test_parse_medicover_accounts_duplicate_alias():
@@ -69,3 +69,48 @@ def test_parse_medicover_accounts_single_account_no_duplicates():
     assert "default" in accounts
     assert accounts["default"] == ("user1", "pass1")
     assert default == "default"
+
+
+@pytest.fixture
+def clean_env(monkeypatch):
+    """Fixture to ensure environment variables are clean before tests."""
+    vars_to_clean = [
+        "MEDICONY_PERSIST_LOGIN_SESSIONS",
+        "MEDICOVER_USERDATA",
+        "SLEEP_PERIOD_SEC",
+        "MEDICONY_TELEGRAM_CHAT_ID",
+        "MEDICONY_TELEGRAM_TOKEN",
+        "LOG_PATH",
+        "MEDICINE_SEARCH_TIMEOUT_SECONDS",
+        "MEDICONY_ENCRYPTION_KEY",
+    ]
+    for var in vars_to_clean:
+        monkeypatch.delenv(var, raising=False)
+    # Required for basic setup
+    monkeypatch.setenv("MEDICOVER_USERDATA", "user:pass")
+
+
+def test_persist_login_sessions_default(clean_env):
+    """Test that persist_login_sessions defaults to False."""
+    config = MediConyConfig.from_environment()
+    assert config.persist_login_sessions is False
+
+
+@pytest.mark.parametrize(
+    "env_val,expected",
+    [
+        ("0", False),
+        ("false", False),
+        ("False", False),
+        ("1", True),
+        ("true", True),
+        ("True", True),
+        ("yes", True),
+        ("random_string", False),
+    ],
+)
+def test_persist_login_sessions_values(clean_env, monkeypatch, env_val, expected):
+    """Test that persist_login_sessions maps specific values correctly."""
+    monkeypatch.setenv("MEDICONY_PERSIST_LOGIN_SESSIONS", env_val)
+    config = MediConyConfig.from_environment()
+    assert config.persist_login_sessions is expected

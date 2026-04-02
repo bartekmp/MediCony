@@ -41,19 +41,11 @@ async def test_invalid_real_login(env_vars):
         await authenticator.login()
 
 
-async def test_valid_real_login(skip_if_no_real_userdata, env_vars):
-    # Test valid login credentials
-    if "user_data" not in env_vars:
-        pytest.skip("MEDICOVER_USERDATA not available")
-
-    from src.medicover.stdin_mfa_provider import stdin_mfa_provider
-
-    authenticator = Authenticator(env_vars["user_data"])
-    authenticator.mfa_code_provider = stdin_mfa_provider
+async def test_valid_real_login(real_authenticator):
     from src.medicover.auth import MfaVerificationError
 
     try:
-        await authenticator.login()
+        await real_authenticator.login()
     except MfaVerificationError:
         pytest.skip("MFA required and cannot be provided interactively (e.g. Jenkins/CI). Skipping.")
     except LoginError:
@@ -62,20 +54,11 @@ async def test_valid_real_login(skip_if_no_real_userdata, env_vars):
         pytest.fail("Token exchange should not raise TokenExchangeError for valid credentials")
 
 
-async def test_reauthentication_after_error(skip_if_no_real_userdata, env_vars):
-    # Test that reauthentication works after an initial error
-    if "user_data" not in env_vars:
-        pytest.skip("MEDICOVER_USERDATA not available")
-
-    from src.medicover.stdin_mfa_provider import stdin_mfa_provider
+async def test_reauthentication_after_error(real_authenticator):
     from src.medicover.auth import MfaVerificationError
 
-    authenticator = Authenticator(env_vars["user_data"])
-    authenticator.mfa_code_provider = stdin_mfa_provider
-
-    # First login should succeed
     try:
-        session1 = await authenticator.login()
+        session1 = await real_authenticator.login()
         assert session1 is not None
     except MfaVerificationError:
         pytest.skip("MFA required and cannot be provided interactively (e.g. Jenkins/CI). Skipping.")
@@ -85,11 +68,13 @@ async def test_reauthentication_after_error(skip_if_no_real_userdata, env_vars):
     # Simulate a scenario where we need to re-authenticate
     # by calling login again (simulating token expiration scenario)
     try:
-        session2 = await authenticator.login()
+        # Note: calling refresh_access_token first is preferred with our new system,
+        # but calling login() directly with a trusted device_id also works and won't trigger MFA spam.
+        session2 = await real_authenticator.login()
         assert session2 is not None
 
         # Headers should be updated after re-authentication
-        assert authenticator.headers is not None
+        assert real_authenticator.headers is not None
         # The session should be valid (this is a basic check)
         assert hasattr(session2, "get") or hasattr(session2, "post")
 

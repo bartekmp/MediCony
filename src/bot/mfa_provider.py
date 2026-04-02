@@ -81,7 +81,7 @@ class TelegramMfaProvider:
                 ),
             )
             self._mfa_message_id = sent_message.message_id
-            log.info(f"MFA code request sent via Telegram (message_id={self._mfa_message_id})")
+            log.debug(f"MFA code request sent via Telegram (message_id={self._mfa_message_id})")
 
             # Wait for the reply with timeout
             code = await asyncio.wait_for(self._pending_future, timeout=MFA_TIMEOUT_SECONDS)
