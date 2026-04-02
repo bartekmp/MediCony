@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v2.2.1 (2026-04-02)
+
+### Improvement
+
+- Remove MFA gate skip page support ([#77](https://github.com/bartekmp/MediCony/pull/77),
+  [`758e1be`](https://github.com/bartekmp/MediCony/commit/758e1be97d318667f49cffd43cc76439cf35239d))
+
+
 ## v2.2.0 (2026-04-02)
 
 ### Features
