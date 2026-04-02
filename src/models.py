@@ -46,6 +46,22 @@ class MedicoverWatchModel(Base):
         }
 
 
+class MedicoverAccountSessionModel(Base):
+    __tablename__ = "account_session"
+
+    account = Column(String(64), primary_key=True)
+    deviceId = Column(String(255))
+    refreshToken = Column(Text)
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert account session to dictionary."""
+        return {
+            "account": self.account,
+            "deviceId": self.deviceId,
+            "refreshToken": self.refreshToken,
+        }
+
+
 class MedicoverAppointmentModel(Base):
     __tablename__ = "appointment"
 

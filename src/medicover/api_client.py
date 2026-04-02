@@ -31,10 +31,25 @@ class MediAPI:
         if alias not in self._accounts:
             self._accounts[alias] = (authenticator, HTTPClient(authenticator))
 
-    def add_account(self, alias: str, username: str, password: str, mfa_code_provider=None):
+    def add_account(
+        self,
+        alias: str,
+        username: str,
+        password: str,
+        mfa_code_provider=None,
+        device_id=None,
+        refresh_token=None,
+        session_save_callback=None,
+    ):
         self._add_account_internal(
             alias,
-            Authenticator(f"{username}:{password}", mfa_code_provider=mfa_code_provider),
+            Authenticator(
+                f"{username}:{password}",
+                mfa_code_provider=mfa_code_provider,
+                device_id=device_id,
+                refresh_token=refresh_token,
+                session_save_callback=session_save_callback,
+            ),
         )
 
     async def use_account(self, alias: str):

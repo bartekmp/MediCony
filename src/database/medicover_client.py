@@ -109,3 +109,9 @@ class MedicoverDbClient:
             auto_book,
             account,
         )
+
+    def get_account_session(self, account: str) -> Optional[Tuple[str, str]]:
+        return self.db.get_account_session(account)
+
+    def save_account_session(self, account: str, device_id: str, refresh_token: str):
+        self.db.save_account_session(account, device_id, refresh_token)

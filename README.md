@@ -108,9 +108,11 @@ MediCony can be configured using environment variables or a `.env` file. Environ
 
 ### Application Settings
 
-| Variable   | Required | Default              | Description                  |
-| ---------- | -------- | -------------------- | ---------------------------- |
-| `LOG_PATH` | ❌        | `log/medicony.log`   | Path to log file             |
+| Variable                          | Required | Default              | Description                                                    |
+| --------------------------------- | -------- | -------------------- | -------------------------------------------------------------- |
+| `LOG_PATH`                        | ❌        | `log/medicony.log`   | Path to log file                                               |
+| `MEDICONY_PERSIST_LOGIN_SESSIONS` | ❌        | `0`                  | Set to `1` to persist login sessions in the DB between reloads |
+| `MEDICONY_ENCRYPTION_KEY`         | ❌        | -                    | Fernet key to encrypt session refresh tokens in the database.  |
 
 ### Database Settings
 
@@ -138,6 +140,9 @@ MEDICOVER_USERDATA=your_username:your_password
 # echo -n "Sup3r$ecret" | base64 -> U3VwM3IkZWNyZXQ=
 MEDICOVER_USERDATA=main@am9obi5kb2VAZXhhbXBsZS5jb20=:UzNjcjN0OlBAc3M=;wife@amFuZS5kQGV4YW1wbGUuY29t:U3VwM3IkZWNyZXQ=
 
+# Recommended Security Setting: Encrypting tokens at rest
+# Generate a key: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+MEDICONY_ENCRYPTION_KEY="your_fernet_key_here"
 
 # Optional: Telegram notifications
 MEDICONY_TELEGRAM_CHAT_ID=1234567890
@@ -161,6 +166,36 @@ docker run -d \
   -v $(pwd)/log:/app/log \
   medicony start
 ```
+
+---
+
+## Authentication
+
+MediCony robustly handles authentication with the Medicover platform, incorporating support for advanced scenarios like multi-factor authentication (MFA) and multiple accounts.
+
+### 1. Specifying Accounts (Userdata)
+Credentials can be passed via the `MEDICOVER_USERDATA` environment variable.
+- **Single Account:** `username:password`
+- **Multiple Accounts:** Separate each account with a semicolon `;`, and use the format `alias@base64_user:base64_password`. The first alias defined becomes your default account for CLI actions unless overridden by `--account`. 
+Example: `main@am9objpwYXNz;spouse@YWxpY2U6c2VjcmV0`
+
+### 2. Multi-Factor Authentication (MFA)
+Medicover often enforces MFA for security. MediCony handles the MFA gate natively. 
+When challenged, MediCony will pause its workflow and request the 6-digit MFA code from the user through two simultaneous channels (if configured):
+- **Command Line (CLI)**: A prompt in your terminal asking for the 6-digit code.
+- **Interactive Telegram Bot**: A message from your configured Telegram bot asking you to reply with the code. 
+Once successfully provided, MediCony registers your device as a trusted device for subsequent logins.
+
+### 3. Session Storage and Persistence
+By default, the active session access tokens, device identifiers, and refresh keys are kept **only in memory** as long as MediCony is continuously running. If you restart the container or application, it will re-authenticate, which may periodically trigger new MFA prompts depending on Medicover's security system.
+
+You can modify this behavior to persist login sessions:
+- Set `MEDICONY_PERSIST_LOGIN_SESSIONS=1` to save authentication states inside the PostgreSQL database. This mitigates repeated MFA queries upon restarting the app.
+- Provide `MEDICONY_ENCRYPTION_KEY` (a valid Fernet encryption key) to seamlessly and securely encrypt the saved session tokens in your database.
+  You can quickly generate a new key using Python:
+  ```bash
+  python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+  ```
 
 ---
 

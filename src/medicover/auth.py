@@ -56,6 +56,9 @@ class Authenticator:
         self,
         userdata: str,
         mfa_code_provider: Callable[[str], Awaitable[str | None]] | None = None,
+        device_id: str | None = None,
+        refresh_token: str | None = None,
+        session_save_callback: Callable[[str, str], None] | None = None,
     ):
         self.userdata = parse_userdata(userdata)
         self.session = None
@@ -69,6 +72,13 @@ class Authenticator:
         # Optional async callback to request MFA 2FA codes from the user (e.g., via Telegram or stdin).
         # Signature: async (channel: str) -> str | None — returns the 6-digit code or None on timeout/abort.
         self.mfa_code_provider = mfa_code_provider
+
+        self.device_id = device_id or str(uuid.uuid4())
+        self.refresh_token = refresh_token
+        self.session_save_callback = session_save_callback
+        # If we generated a new device_id and have a callback, save it
+        if not device_id and self.session_save_callback:
+            self.session_save_callback(self.device_id, self.refresh_token or "")
 
     async def slack_get(self, url: str, **kwargs) -> requests.Response:
         """
@@ -272,9 +282,8 @@ class Authenticator:
 
     async def login(self):
         self.session = requests.Session()
-        # Generate random state, device_id, code_verifier and code_challenge for the login request
+        # Generate random state, code_verifier and code_challenge for the login request
         state = "".join(random.choices(string.ascii_lowercase + string.digits, k=32))
-        device_id = str(uuid.uuid4())
         code_verifier = "".join(uuid.uuid4().hex for _ in range(3))
         code_challenge = self.generate_code_challenge(code_verifier)
 
@@ -287,7 +296,7 @@ class Authenticator:
             f"?client_id=web&redirect_uri={oidc_redirect}&response_type=code"
             f"&scope=openid+offline_access+profile&state={state}&code_challenge={code_challenge}"
             f"&code_challenge_method=S256&response_mode=query&ui_locales=pl&app_version={app_version}"
-            f"&previous_app_version={app_version}&device_id={device_id}&device_name=Chrome"
+            f"&previous_app_version={app_version}&device_id={self.device_id}&device_name=Chrome"
         )
 
         # Initialize login by redirecting to authorization page
@@ -388,6 +397,54 @@ class Authenticator:
                 response=response,
             )
         # Save the token and add it to the headers
-        self.bearerToken = response.json()["access_token"]
+        resp_json = response.json()
+        self.bearerToken = resp_json["access_token"]
+        if "refresh_token" in resp_json:
+            self.refresh_token = resp_json["refresh_token"]
+            if self.session_save_callback:
+                self.session_save_callback(self.device_id, self.refresh_token)
+
         self.headers["Authorization"] = f"Bearer {self.bearerToken}"
         return self.session
+
+    async def refresh_access_token(self) -> bool:
+        """
+        Attempt to refresh the access token silently using the stored refresh_token.
+        Returns True if successful, False if the refresh token is missing or invalid.
+        """
+        if not self.refresh_token:
+            return False
+
+        log.info("Attempting silent token refresh using refresh_token")
+
+        if self.session is None:
+            self.session = requests.Session()
+
+        login_url = "https://login-online24.medicover.pl"
+        token_data = {
+            "grant_type": "refresh_token",
+            "refresh_token": self.refresh_token,
+            "client_id": "web",
+        }
+
+        try:
+            await asyncio.sleep(random.randint(0, 1))
+            response = self.session.post(f"{login_url}/connect/token", data=token_data, headers=self.headers)
+            if response.status_code == 200:
+                resp_json = response.json()
+                self.bearerToken = resp_json["access_token"]
+                if "refresh_token" in resp_json:
+                    self.refresh_token = resp_json["refresh_token"]
+                    if self.session_save_callback:
+                        self.session_save_callback(self.device_id, self.refresh_token)
+
+                self.headers["Authorization"] = f"Bearer {self.bearerToken}"
+                log.info("Token refreshed successfully")
+                return True
+            else:
+                log.warning(f"Token refresh failed, status code: {response.status_code}")
+                self.refresh_token = None
+                return False
+        except Exception as e:
+            log.error(f"Error during refresh token exchange: {e}")
+            return False

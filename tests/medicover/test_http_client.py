@@ -22,10 +22,12 @@ class TestHTTPClient:
         """Create a mock authenticator."""
         authenticator = MagicMock(spec=Authenticator)
         authenticator.login = AsyncMock()
+        authenticator.refresh_access_token = AsyncMock(return_value=False)
         authenticator.headers = {
             "Authorization": "Bearer test_token",
             "User-Agent": "test",
         }
+        authenticator.refresh_token = None
         return authenticator
 
     @pytest.fixture
@@ -54,7 +56,8 @@ class TestHTTPClient:
         assert http_client.headers == mock_authenticator.headers
 
     @pytest.mark.asyncio
-    async def test_auth_with_retries(self, http_client, mock_authenticator):
+    @patch("asyncio.sleep", new_callable=AsyncMock)
+    async def test_auth_with_retries(self, mock_sleep, http_client, mock_authenticator):
         """Test authentication with retries on failure."""
         mock_session = MagicMock()
         mock_authenticator.login.side_effect = [
@@ -76,8 +79,21 @@ class TestHTTPClient:
 
         await http_client.re_auth()
 
+        mock_authenticator.refresh_access_token.assert_called_once()
         mock_authenticator.login.assert_called_once()
         assert http_client.session == mock_session
+
+    @pytest.mark.asyncio
+    async def test_re_auth_refresh_success(self, http_client, mock_authenticator):
+        """Test re-authentication calls refresh and succeeds."""
+        mock_authenticator.refresh_access_token.return_value = True
+        mock_authenticator.headers = {"Authorization": "Bearer new_test_token"}
+
+        await http_client.re_auth()
+
+        mock_authenticator.refresh_access_token.assert_called_once()
+        mock_authenticator.login.assert_not_called()
+        assert http_client.headers == mock_authenticator.headers
 
     @pytest.mark.asyncio
     @patch("asyncio.sleep", new_callable=AsyncMock)

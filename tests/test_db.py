@@ -47,10 +47,7 @@ class SqliteDbLogic(MedicoverDbLogic):
 
     def __init__(self, test_db_path: str = ":memory:"):
         # Override parent init to use SQLite for testing
-        self._lock = (
-            self.__class__.__dict__.get("_lock", None)
-            or __import__("threading").RLock()
-        )
+        self._lock = self.__class__.__dict__.get("_lock", None) or __import__("threading").RLock()
 
         # Use SQLite for testing
         if test_db_path == ":memory:":
@@ -63,9 +60,7 @@ class SqliteDbLogic(MedicoverDbLogic):
             self.engine = create_engine(database_url, echo=False)
 
             # Create session factory
-            self.SessionLocal = sessionmaker(
-                autocommit=False, autoflush=False, bind=self.engine
-            )
+            self.SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=self.engine)
 
             # Create tables
             Base.metadata.create_all(bind=self.engine)
@@ -222,11 +217,7 @@ def test_add_appointment_history(db):
     db.add_appointment_history(appointment)
 
     with db.get_session() as session:
-        appointments = (
-            session.query(MedicoverAppointmentModel)
-            .filter_by(clinic=clinic.id, doctor=doctor.id)
-            .all()
-        )
+        appointments = session.query(MedicoverAppointmentModel).filter_by(clinic=clinic.id, doctor=doctor.id).all()
         assert len(appointments) == 1
         assert appointments[0].clinic == clinic.id
         assert appointments[0].doctor == doctor.id
@@ -266,11 +257,7 @@ def test_update_appointment(db):
     db.update_appointment(appointment)
 
     with db.get_session() as session:
-        appointments = (
-            session.query(MedicoverAppointmentModel)
-            .filter_by(clinic=clinic.id, doctor=doctor.id)
-            .all()
-        )
+        appointments = session.query(MedicoverAppointmentModel).filter_by(clinic=clinic.id, doctor=doctor.id).all()
         assert len(appointments) == 1
         assert appointments[0].bookingIdentifier == "1234567"
 
@@ -295,38 +282,30 @@ def test_remove_appointment(db):
     db.remove_appointment(appointment_id)
 
     with db.get_session() as session:
-        appointments = (
-            session.query(MedicoverAppointmentModel).filter_by(id=appointment_id).all()
-        )
+        appointments = session.query(MedicoverAppointmentModel).filter_by(id=appointment_id).all()
         assert len(appointments) == 0
 
 
 def test_save_watch_with_not_all_fields(db):
     region = 200
     specialty = 9
-    watch = Watch.from_tuple(
-        (
-            0,
-            region,
-            "uuu",
-            [specialty],
-            1337,
-            2137,
-            "2023-10-10",
-            "2023-10-11",
-            "09:00:00-17:00:00",
-            True,
-        )
-    )
+    watch = Watch.from_tuple((
+        0,
+        region,
+        "uuu",
+        [specialty],
+        1337,
+        2137,
+        "2023-10-10",
+        "2023-10-11",
+        "09:00:00-17:00:00",
+        True,
+    ))
 
     db.save_watch(watch)
 
     with db.get_session() as session:
-        watches = (
-            session.query(MedicoverWatchModel)
-            .filter_by(region=region, specialty=str(specialty))
-            .all()
-        )
+        watches = session.query(MedicoverWatchModel).filter_by(region=region, specialty=str(specialty)).all()
         assert len(watches) == 1
         assert watches[0].region == region
         assert watches[0].specialty == str(specialty)
@@ -483,31 +462,25 @@ def test_dbclient_remove_watch(db_client):
 def test_dbclient_save_watch(db_client):
     region = 200
     specialty = 9
-    watch = Watch.from_tuple(
-        (
-            0,
-            region,
-            "Aszchabad",
-            [specialty],
-            1337,
-            2137,
-            "2023-10-10",
-            "2023-10-11",
-            "09:00:00-17:00:00",
-            True,
-            "doctor:123,456;clinic:789,1011",
-            "DiagnosticProcedure",
-        )
-    )
+    watch = Watch.from_tuple((
+        0,
+        region,
+        "Aszchabad",
+        [specialty],
+        1337,
+        2137,
+        "2023-10-10",
+        "2023-10-11",
+        "09:00:00-17:00:00",
+        True,
+        "doctor:123,456;clinic:789,1011",
+        "DiagnosticProcedure",
+    ))
 
     db_client.save_watch(watch)
 
     with db_client.db.get_session() as session:
-        watches = (
-            session.query(MedicoverWatchModel)
-            .filter_by(region=region, specialty=str(specialty))
-            .all()
-        )
+        watches = session.query(MedicoverWatchModel).filter_by(region=region, specialty=str(specialty)).all()
         assert len(watches) == 1
         assert watches[0].region == region
         assert watches[0].city == "Aszchabad"
@@ -519,32 +492,26 @@ def test_dbclient_save_watch(db_client):
 def test_dbclient_save_watch_multiple_specialties(db_client):
     region = 200
     specialty = [9, 10, 11, 12]
-    watch = Watch.from_tuple(
-        (
-            0,
-            region,
-            "Aszchabad",
-            specialty,
-            1337,
-            2137,
-            "2023-10-10",
-            "2023-10-11",
-            "09:00:00-17:00:00",
-            True,
-            None,
-            "DiagnosticProcedure",
-        )
-    )
+    watch = Watch.from_tuple((
+        0,
+        region,
+        "Aszchabad",
+        specialty,
+        1337,
+        2137,
+        "2023-10-10",
+        "2023-10-11",
+        "09:00:00-17:00:00",
+        True,
+        None,
+        "DiagnosticProcedure",
+    ))
 
     db_client.save_watch(watch)
     specialty_str = ",".join([str(s) for s in specialty])
 
     with db_client.db.get_session() as session:
-        watches = (
-            session.query(MedicoverWatchModel)
-            .filter_by(region=region, specialty=specialty_str)
-            .all()
-        )
+        watches = session.query(MedicoverWatchModel).filter_by(region=region, specialty=specialty_str).all()
         assert len(watches) == 1
         assert watches[0].region == region
         assert watches[0].city == "Aszchabad"
@@ -587,11 +554,7 @@ def test_dbclient_update_appointment(db_client):
     db_client.update_appointment(appointment)
 
     with db_client.db.get_session() as session:
-        appointments = (
-            session.query(MedicoverAppointmentModel)
-            .filter_by(clinic=clinic.id, doctor=doctor.id)
-            .all()
-        )
+        appointments = session.query(MedicoverAppointmentModel).filter_by(clinic=clinic.id, doctor=doctor.id).all()
         assert len(appointments) == 1
         assert appointments[0].bookingIdentifier == "1994567"
 
@@ -621,18 +584,12 @@ def test_dbclient_save_appointments_and_filter_old(db_client):
         booking_identifier=1234568,
     )
 
-    new_appointments = db_client.save_appointments_and_filter_old(
-        [appointment1, appointment2]
-    )
+    new_appointments = db_client.save_appointments_and_filter_old([appointment1, appointment2])
 
     assert len(new_appointments) == 2
 
     with db_client.db.get_session() as session:
-        appointments = (
-            session.query(MedicoverAppointmentModel)
-            .filter_by(clinic=clinic.id, doctor=doctor.id)
-            .all()
-        )
+        appointments = session.query(MedicoverAppointmentModel).filter_by(clinic=clinic.id, doctor=doctor.id).all()
         assert len(appointments) == 2
         assert appointments[0].clinic == clinic.id
         assert appointments[0].doctor == doctor.id
@@ -684,30 +641,24 @@ def test_edit_watch_updates_fields(db_client):
     # Insert a watch
     region = 1
     specialty = [9]
-    watch = Watch.from_tuple(
-        (
-            0,
-            region,
-            "OldCity",
-            specialty,
-            1337,
-            2137,
-            "2023-10-10",
-            "2023-10-11",
-            "09:00:00-17:00:00",
-            False,
-            None,
-            "Standard",
-        )
-    )
+    watch = Watch.from_tuple((
+        0,
+        region,
+        "OldCity",
+        specialty,
+        1337,
+        2137,
+        "2023-10-10",
+        "2023-10-11",
+        "09:00:00-17:00:00",
+        False,
+        None,
+        "Standard",
+    ))
     db_client.save_watch(watch)
 
     with db_client.db.get_session() as session:
-        watch_record = (
-            session.query(MedicoverWatchModel)
-            .filter_by(region=region, city="OldCity")
-            .first()
-        )
+        watch_record = session.query(MedicoverWatchModel).filter_by(region=region, city="OldCity").first()
         watch_id = watch_record.id
 
     # Edit the watch
@@ -737,30 +688,24 @@ def test_edit_watch_no_fields_to_update(db_client):
     # Insert a watch
     region = 2
     specialty = [10]
-    watch = Watch.from_tuple(
-        (
-            0,
-            region,
-            "City",
-            specialty,
-            555,
-            666,
-            "2023-10-10",
-            "2023-10-11",
-            "09:00:00-17:00:00",
-            False,
-            None,
-            "Standard",
-        )
-    )
+    watch = Watch.from_tuple((
+        0,
+        region,
+        "City",
+        specialty,
+        555,
+        666,
+        "2023-10-10",
+        "2023-10-11",
+        "09:00:00-17:00:00",
+        False,
+        None,
+        "Standard",
+    ))
     db_client.save_watch(watch)
 
     with db_client.db.get_session() as session:
-        watch_record = (
-            session.query(MedicoverWatchModel)
-            .filter_by(region=region, city="City")
-            .first()
-        )
+        watch_record = session.query(MedicoverWatchModel).filter_by(region=region, city="City").first()
         watch_id = watch_record.id
 
     # Should not raise or update anything if no fields are provided

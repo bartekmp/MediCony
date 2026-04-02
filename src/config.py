@@ -99,6 +99,8 @@ class MediConyConfig:
     # Application settings
     log_path: str
     medicine_search_timeout_seconds: int
+    persist_login_sessions: bool = False
+    encryption_key: Optional[str] = None
 
     # Derived / parsed fields (defaults allowed after required fields)
     medicover_accounts: Dict[str, Tuple[str, str]] = field(default_factory=dict)
@@ -121,6 +123,8 @@ class MediConyConfig:
         log_path = os.environ.get("LOG_PATH", "log/medicony.log")
         # Use MEDICINE_SEARCH_TIMEOUT_SECONDS only (no SEC fallback)
         medicine_search_timeout_seconds = int(os.environ.get("MEDICINE_SEARCH_TIMEOUT_SECONDS", "120"))
+        persist_login_sessions = os.environ.get("MEDICONY_PERSIST_LOGIN_SESSIONS", "0") in ("1", "true", "True", "yes")
+        encryption_key = os.environ.get("MEDICONY_ENCRYPTION_KEY")
 
         config = cls(
             sleep_period_seconds=sleep_period_seconds,
@@ -130,6 +134,8 @@ class MediConyConfig:
             telegram_add_command_suggested_properties=telegram_add_command_suggested_properties,
             log_path=log_path,
             medicine_search_timeout_seconds=medicine_search_timeout_seconds,
+            persist_login_sessions=persist_login_sessions,
+            encryption_key=encryption_key,
             medicover_accounts=accounts,
             medicover_default_account=default_alias if accounts else "default",
         )
@@ -187,6 +193,8 @@ class MediConyConfig:
             "LOG_PATH": self.log_path,
             "MEDICOVER_ACCOUNTS": ",".join(self.medicover_accounts.keys()),
             "MEDICINE_SEARCH_TIMEOUT_SECONDS": str(self.medicine_search_timeout_seconds),
+            "MEDICONY_PERSIST_LOGIN_SESSIONS": str(self.persist_login_sessions),
+            "MEDICONY_ENCRYPTION_KEY": "set" if self.encryption_key else "not set",
         }
 
     def get_account(self, alias: Optional[str] = None) -> Tuple[str, str]:

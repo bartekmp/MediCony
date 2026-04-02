@@ -21,10 +21,18 @@ class HTTPClient:
         retry=tenacity.retry_if_not_exception_type((MfaGateError, MfaVerificationError)),
     )
     async def auth(self):
+        if self.authenticator.refresh_token:
+            log.info("Using saved device refresh key for authentication")
+            if await self.authenticator.refresh_access_token():
+                self.headers = self.authenticator.headers
+                return
         self.session = await self.authenticator.login()
         self.headers = self.authenticator.headers
 
     async def re_auth(self):
+        if await self.authenticator.refresh_access_token():
+            self.headers = self.authenticator.headers
+            return
         await self.auth()
 
     @tenacity.retry(
