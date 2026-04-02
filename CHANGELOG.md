@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v2.2.0 (2026-04-02)
+
+### Features
+
+- **auth**: Session persistence ([#76](https://github.com/bartekmp/MediCony/pull/76),
+  [`b0e13a1`](https://github.com/bartekmp/MediCony/commit/b0e13a1037936dea6d52bd9ea54f58ba7e4bdba7))
+
+
 ## v2.1.1 (2026-03-31)
 
 ### Bug Fixes
