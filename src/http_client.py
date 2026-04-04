@@ -6,7 +6,7 @@ import tenacity
 from requests import Session
 
 from src.logger import log
-from src.medicover.auth import Authenticator, MfaGateError, MfaVerificationError
+from src.medicover.auth import Authenticator, LoginError, MfaGateError, MfaVerificationError, MfaLimitExceededError
 
 
 class HTTPClient:
@@ -18,7 +18,12 @@ class HTTPClient:
     @tenacity.retry(
         wait=tenacity.wait_fixed(30),
         stop=tenacity.stop_after_attempt(7),
-        retry=tenacity.retry_if_not_exception_type((MfaGateError, MfaVerificationError)),
+        retry=tenacity.retry_if_not_exception_type((
+            MfaGateError,
+            MfaVerificationError,
+            MfaLimitExceededError,
+            LoginError,
+        )),
     )
     async def auth(self):
         if self.authenticator.refresh_token:

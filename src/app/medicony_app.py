@@ -164,9 +164,15 @@ class MediCony:
             log.info("Neither MedicoverApp nor MedicineApp initialized, exiting daemon mode")
             return
 
+        from src.medicover.auth import LoginError, MfaLimitExceededError
+
         try:
             log.info("Authenticating apps in daemon mode...")
             await self.authenticate()
+        except (LoginError, MfaLimitExceededError) as e:
+            log.warning(
+                f"Initial authentication failed due to MFA limit/cooldown: {e}. Daemon will proceed and retry in later cycles."
+            )
         except Exception as e:
             log.error(f"Authentication failed during daemon startup: {e}")
             return

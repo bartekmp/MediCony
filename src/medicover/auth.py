@@ -43,6 +43,12 @@ class MfaVerificationError(Exception):
     pass
 
 
+class MfaLimitExceededError(Exception):
+    """Raised when Medicover prevents sending more MFA codes due to rate limiting."""
+
+    pass
+
+
 def parse_userdata(userdata: str) -> Userdata:
     # Userdata format: "username:password"
     if ":" not in userdata:
@@ -82,6 +88,7 @@ class Authenticator:
         self.device_id = device_id or str(uuid.uuid4())
         self.refresh_token = refresh_token
         self.session_save_callback = session_save_callback
+        self.mfa_cooldown_until = 0.0
         # If we generated a new device_id and have a callback, save it
         if not device_id and self.session_save_callback:
             self.session_save_callback(self.device_id, self.refresh_token or "")
@@ -148,6 +155,15 @@ class Authenticator:
 
         # Fetch the MFA verification page
         mfa_page = await self.slack_get(f"{login_url}{mfa_redirect_url}", allow_redirects=True)
+
+        if (
+            "Przekroczyłeś limit wysyłki kodów jednorazowych" in mfa_page.text
+            or "You have exceeded the verification code number limit" in mfa_page.text
+        ):
+            raise MfaLimitExceededError(
+                "Medicover MFA code limit exceeded. You must wait at least 1 hour before next login attempt."
+            )
+
         soup = BeautifulSoup(mfa_page.text, "html.parser")
 
         # Extract form fields
@@ -235,6 +251,13 @@ class Authenticator:
         )
 
     async def login(self):
+        if self.mfa_cooldown_until > time.time():
+            remaining_min = int((self.mfa_cooldown_until - time.time()) / 60)
+            raise LoginError(
+                f"MFA cooldown is active. Too many verification codes were requested. "
+                f"Authentication will be possible in approximately {remaining_min} minutes."
+            )
+
         self.session = requests.Session()
         # Generate random state, code_verifier and code_challenge for the login request
         state = "".join(random.choices(string.ascii_lowercase + string.digits, k=32))
@@ -318,7 +341,13 @@ class Authenticator:
             )
         # Handle MFA 2FA code verification (/Account/Mfa — distinct from /Account/MfaGate)
         if "mfa" in next_url.lower() and "mfagate" not in next_url.lower():
-            next_url = await self.handle_mfa_verification(next_url)
+            try:
+                next_url = await self.handle_mfa_verification(next_url)
+            except MfaLimitExceededError as e:
+                if self.mfa_result_callback:
+                    await self.mfa_result_callback(False, str(e))
+                self.mfa_cooldown_until = time.time() + 3600
+                raise
 
         # Fetch authorization code by parsing query string from the next redirection URL
         log.info("Fetching authorization code...")
