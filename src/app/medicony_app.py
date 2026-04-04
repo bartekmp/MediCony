@@ -3,6 +3,7 @@ Main application module that orchestrates Medicover and Medicine functionalities
 """
 
 import asyncio
+import sys
 from argparse import Namespace
 
 from src.app.medicine_app import MedicineApp
@@ -36,6 +37,21 @@ class MediCony:
             self.medicine_app = MedicineApp(config, PharmaDbClient(), args)
         else:
             self.medicine_app = None
+
+        # Early check for impossible authentication
+        if self.medicover_app:
+            from src.medicover.stdin_mfa_provider import is_interactive
+
+            if not self.config.is_telegram_enabled and not is_interactive():
+                log.error(
+                    "MediCony was started in a non-interactive environment (no TTY) and no Telegram bot is configured."
+                )
+                log.error("This means MFA verification will NOT be possible. Authentication will fail.")
+                log.error("To fix this, please either:")
+                log.error(" - Configure a Telegram bot (MEDICONY_TELEGRAM_TOKEN and MEDICONY_TELEGRAM_CHAT_ID)")
+                log.error(" - Run MediCony in an interactive terminal")
+                log.error(" - Set MEDICONY_INTERACTIVE=true (if you strictly know stdin is available via pipe)")
+                sys.exit(1)
 
     async def authenticate(self):
         """Authenticate with Medicover API."""
@@ -242,8 +258,13 @@ class MediCony:
             else:
                 t1 = None
 
-            t2 = asyncio.create_task(stdin_mfa_provider(channel))
-            tasks.add(t2)
+            from src.medicover.stdin_mfa_provider import is_interactive
+
+            if is_interactive():
+                t2 = asyncio.create_task(stdin_mfa_provider(channel))
+                tasks.add(t2)
+            else:
+                t2 = None
 
             while tasks:
                 done, tasks = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)

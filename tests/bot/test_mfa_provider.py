@@ -76,12 +76,14 @@ async def test_request_code_returns_none_when_chat_id_missing(mock_bot, mock_dis
         p = TelegramMfaProvider(mock_bot, mock_dispatcher)
         result = await p.request_code("Email")
         assert result is None
+
+
 @pytest.mark.asyncio
 async def test_send_verification_result(provider, mock_bot):
     """The provider should send a status message as a reply."""
     provider._mfa_message_id = 42
     await provider.send_verification_result(True)
-    
+
     mock_bot.send_message.assert_called_once()
     args, kwargs = mock_bot.send_message.call_args
     assert "Verification successful" in kwargs["text"]
@@ -89,12 +91,13 @@ async def test_send_verification_result(provider, mock_bot):
     assert provider._mfa_message_id is None
     assert provider._pending_future is None
 
+
 @pytest.mark.asyncio
 async def test_send_verification_result_failure(provider, mock_bot):
     """The provider should send a failure message with details."""
     provider._mfa_message_id = 42
     await provider.send_verification_result(False, "Invalid code")
-    
+
     mock_bot.send_message.assert_called_once()
     args, kwargs = mock_bot.send_message.call_args
     assert "Verification failed" in kwargs["text"]

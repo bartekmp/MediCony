@@ -45,7 +45,9 @@ class MedicoverApp:
             )
 
         def get_auth_kwargs(alias: str):
-            kwargs = {"mfa_code_provider": stdin_mfa_provider}
+            from src.medicover.stdin_mfa_provider import is_interactive
+
+            kwargs = {"mfa_code_provider": stdin_mfa_provider if is_interactive() else None}
             if self.config.persist_login_sessions:
                 sess = self.db_client.get_account_session(alias)
                 dev_id, ref_tok = sess if sess else (None, None)

@@ -116,12 +116,8 @@ class Authenticator:
         version_url = "https://online24.medicover.pl/env-config.js"
         response = await self.slack_get(version_url)
         if response.status_code != 200:
-            log.error(
-                f"Failed to retrieve app version, status code: {response.status_code}"
-            )
-            raise requests.RequestException(
-                f"Failed to retrieve app version, status code: {response.status_code}"
-            )
+            log.error(f"Failed to retrieve app version, status code: {response.status_code}")
+            raise requests.RequestException(f"Failed to retrieve app version, status code: {response.status_code}")
 
         content = response.text
         if "VITE_VERSION" not in content:
@@ -151,17 +147,13 @@ class Authenticator:
         login_url = "https://login-online24.medicover.pl"
 
         # Fetch the MFA verification page
-        mfa_page = await self.slack_get(
-            f"{login_url}{mfa_redirect_url}", allow_redirects=True
-        )
+        mfa_page = await self.slack_get(f"{login_url}{mfa_redirect_url}", allow_redirects=True)
         soup = BeautifulSoup(mfa_page.text, "html.parser")
 
         # Extract form fields
         form = soup.find("form")
         if not form:
-            log.log_to_file(
-                "ERROR", f"No form found on MFA verification page: {mfa_page.text}"
-            )
+            log.log_to_file("ERROR", f"No form found on MFA verification page: {mfa_page.text}")
             raise MfaVerificationError("MFA verification page did not contain a form")
 
         form_action = form.get("action", "")
@@ -174,38 +166,26 @@ class Authenticator:
 
         if not csrf_input or not return_url_input or not mfa_code_id_input:
             log.log_to_file("ERROR", f"Missing MFA form fields: {mfa_page.text}")
-            raise MfaVerificationError(
-                "Failed to extract required MFA verification form fields"
-            )
+            raise MfaVerificationError("Failed to extract required MFA verification form fields")
 
         csrf_token = csrf_input.get("value", "")
         return_url = return_url_input.get("value", "")
         mfa_code_id = mfa_code_id_input.get("value", "")
         channel = channel_input.get("value") or "Email" if channel_input else "Email"
-        operation = (
-            operation_input.get("value") or "SIGN_IN" if operation_input else "SIGN_IN"
-        )
-        device_name = (
-            device_name_input.get("value") or self.browser_name
-            if device_name_input
-            else self.browser_name
-        )
+        operation = operation_input.get("value") or "SIGN_IN" if operation_input else "SIGN_IN"
+        device_name = device_name_input.get("value") or self.browser_name if device_name_input else self.browser_name
 
         log.info(f"MFA verification required, code sent to you via {channel}")
 
         # Request the code from the user via the provider
         mfa_code = await self.mfa_code_provider(channel)
         if not mfa_code:
-            raise MfaVerificationError(
-                "MFA verification aborted: no code was provided (timeout or user cancelled)"
-            )
+            raise MfaVerificationError("MFA verification aborted: no code was provided (timeout or user cancelled)")
 
         # Strip whitespace and validate format
         mfa_code = mfa_code.strip()
         if not re.match(r"^\d{6}$", mfa_code):
-            raise MfaVerificationError(
-                f"Invalid MFA code format: expected 6 digits, got '{mfa_code}'"
-            )
+            raise MfaVerificationError(f"Invalid MFA code format: expected 6 digits, got '{mfa_code}'")
 
         # Submit the verification form
         mfa_submit_data = {
@@ -223,11 +203,7 @@ class Authenticator:
             **self.headers,
             "Content-Type": "application/x-www-form-urlencoded",
             "Origin": login_url,
-            "Referer": (
-                mfa_page.url
-                if hasattr(mfa_page, "url")
-                else f"{login_url}{mfa_redirect_url}"
-            ),
+            "Referer": (mfa_page.url if hasattr(mfa_page, "url") else f"{login_url}{mfa_redirect_url}"),
         }
         form_endpoint = urljoin(login_url, form_action)
         response = self.session.post(
@@ -240,12 +216,8 @@ class Authenticator:
         if response.status_code == 302:
             redirect_url = response.headers.get("Location")
             if not redirect_url:
-                raise MfaVerificationError(
-                    "MFA verification succeeded but no redirect URL was provided"
-                )
-            log.info(
-                "MFA verification successful (302 redirect), device marked as trusted"
-            )
+                raise MfaVerificationError("MFA verification succeeded but no redirect URL was provided")
+            log.info("MFA verification successful (302 redirect), device marked as trusted")
             if self.mfa_result_callback:
                 await self.mfa_result_callback(True, "Device marked as trusted")
             return redirect_url
@@ -307,15 +279,11 @@ class Authenticator:
 
         # Parse the HTML response to get the verification token
         soup = BeautifulSoup(response.content, "html.parser")
-        if (
-            csrf_input := soup.find("input", {"name": "__RequestVerificationToken"})
-        ) is not None:
+        if (csrf_input := soup.find("input", {"name": "__RequestVerificationToken"})) is not None:
             csrf_token = csrf_input.get("value")  # type: ignore
         else:
             log.log_to_file("ERROR", f"Invalid response: {response.text}")
-            raise ValueError(
-                "Failed to find the CSRF token in the response, see the log for more details"
-            )
+            raise ValueError("Failed to find the CSRF token in the response, see the log for more details")
 
         # Submit login form with auth data and get the redirection URL
         login_data = {
@@ -327,9 +295,7 @@ class Authenticator:
             "Input.IsSimpleAccessRegulationAccepted": "true",
             "__RequestVerificationToken": csrf_token,
         }
-        response = self.session.post(
-            next_url, data=login_data, headers=self.headers, allow_redirects=False
-        )
+        response = self.session.post(next_url, data=login_data, headers=self.headers, allow_redirects=False)
         # Check if the login failed due to invalid credentials
         if "INVALID_CREDENTIALS" in response.text or response.status_code != 302:
             log.error("Invalid login credentials provided")
@@ -339,9 +305,7 @@ class Authenticator:
         next_url = response.headers.get("Location")
         if not next_url:
             log.error("'Location' header was empty after submitting the login form")
-            raise requests.URLRequired(
-                "'Location' header was empty after submitting the login form"
-            )
+            raise requests.URLRequired("'Location' header was empty after submitting the login form")
 
         if "mfagate" in next_url.lower():
             log.error(
@@ -362,13 +326,9 @@ class Authenticator:
         next_url_header = response.headers.get("Location")
 
         if not next_url_header:
-            log.error(
-                f"Failed to get authorization code redirect. Status code: {response.status_code}"
-            )
+            log.error(f"Failed to get authorization code redirect. Status code: {response.status_code}")
             log.error(f"Response text (first 500 chars): {response.text[:500]}")
-            raise ValueError(
-                f"No 'Location' header found. Expected a redirect but got status {response.status_code}."
-            )
+            raise ValueError(f"No 'Location' header found. Expected a redirect but got status {response.status_code}.")
 
         query = urlparse(next_url_header).query
 
@@ -392,13 +352,9 @@ class Authenticator:
             "code_verifier": code_verifier,
             "client_id": "web",
         }
-        response = self.session.post(
-            f"{login_url}/connect/token", data=token_data, headers=self.headers
-        )
+        response = self.session.post(f"{login_url}/connect/token", data=token_data, headers=self.headers)
         if response.status_code != 200:
-            log.error(
-                f"Failed to exchange authorization code for tokens: {response.text}"
-            )
+            log.error(f"Failed to exchange authorization code for tokens: {response.text}")
             raise TokenExchangeError(
                 f"Failed to exchange authorization code for tokens, status code: {response.status_code}",
                 response=response,
@@ -436,9 +392,7 @@ class Authenticator:
 
         try:
             await asyncio.sleep(random.randint(0, 1))
-            response = self.session.post(
-                f"{login_url}/connect/token", data=token_data, headers=self.headers
-            )
+            response = self.session.post(f"{login_url}/connect/token", data=token_data, headers=self.headers)
             if response.status_code == 200:
                 resp_json = response.json()
                 self.bearerToken = resp_json["access_token"]
@@ -451,9 +405,7 @@ class Authenticator:
                 log.info("Token refreshed successfully")
                 return True
             else:
-                log.warning(
-                    f"Token refresh failed, status code: {response.status_code}"
-                )
+                log.warning(f"Token refresh failed, status code: {response.status_code}")
                 self.refresh_token = None
                 return False
         except Exception as e:

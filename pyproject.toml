@@ -28,6 +28,7 @@ optional-dependencies = { dev = [
     "pytest==9.0.2",
     "pytest-asyncio==1.3.0",
     "pytest-mock==3.15.1",
+    "pytest-env==1.2.0",
     "python-semantic-release==10.5.3",
     "setuptools_scm==10.0.5",
 ] }
@@ -78,6 +79,9 @@ asyncio_default_fixture_loop_scope = "function"
 filterwarnings = [
     "ignore:Field \"model_custom_emoji_id\" in UniqueGiftColors has conflict with protected namespace \"model_\":UserWarning",
 ]
+
+[tool.pytest_env]
+MEDICONY_INTERACTIVE = "true"
 
 [tool.semantic_release]
 branch = "main"
