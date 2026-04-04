@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v2.2.3 (2026-04-04)
+
+### Update
+
+- Update dependency setuptools-scm to v10 ([#78](https://github.com/bartekmp/MediCony/pull/78),
+  [`8f8f38d`](https://github.com/bartekmp/MediCony/commit/8f8f38dfd45461a82545fe85a7f7ccf0890c9f2e))
+
+
 ## v2.2.2 (2026-04-04)
 
 ### Bug Fixes
