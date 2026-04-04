@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v2.2.2 (2026-04-04)
+
+### Bug Fixes
+
+- **deps**: Update python dependencies ([#79](https://github.com/bartekmp/MediCony/pull/79),
+  [`a618b7b`](https://github.com/bartekmp/MediCony/commit/a618b7b60102c8e32ed6b033f1e8f50d0f6706a4))
+
+
 ## v2.2.1 (2026-04-02)
 
 ### Improvement
