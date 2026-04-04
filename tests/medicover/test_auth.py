@@ -14,8 +14,6 @@ def authenticator():
     return instance
 
 
-
-
 # --- MFA 2FA Verification Tests ---
 
 MFA_PAGE_HTML = """

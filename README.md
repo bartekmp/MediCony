@@ -113,6 +113,7 @@ MediCony can be configured using environment variables or a `.env` file. Environ
 | `LOG_PATH`                        | ❌        | `log/medicony.log`   | Path to log file                                               |
 | `MEDICONY_PERSIST_LOGIN_SESSIONS` | ❌        | `0`                  | Set to `1` to persist login sessions in the DB between reloads |
 | `MEDICONY_ENCRYPTION_KEY`         | ❌        | -                    | Fernet key to encrypt session refresh tokens in the database.  |
+| `MEDICONY_INTERACTIVE`            | ❌        | -                    | Overrides terminal interactivity detection (`true`/`false`). Useful for containers with piped `stdin`. |
 
 ### Database Settings
 
@@ -185,6 +186,8 @@ When challenged, MediCony will pause its workflow and request the 6-digit MFA co
 - **Command Line (CLI)**: A prompt in your terminal asking for the 6-digit code.
 - **Interactive Telegram Bot**: A message from your configured Telegram bot asking you to reply with the code. 
 Once successfully provided, MediCony registers your device as a trusted device for subsequent logins.
+
+If running in a non-interactive environment (like a Docker container without a TTY) and the Telegram bot is NOT configured, MediCony will fail early with an error as authentication would be impossible. You can override interactivity detection by setting `MEDICONY_INTERACTIVE=true`.
 
 ### 3. Session Storage and Persistence
 By default, the active session access tokens, device identifiers, and refresh keys are kept **only in memory** as long as MediCony is continuously running. If you restart the container or application, it will re-authenticate, which may periodically trigger new MFA prompts depending on Medicover's security system.

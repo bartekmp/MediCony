@@ -1,7 +1,6 @@
 """Tests for the dual_mfa_provider logic in MediCony.daemon_worker."""
 
 import asyncio
-from unittest.mock import AsyncMock
 
 import pytest
 
@@ -60,6 +59,7 @@ async def _dual_mfa_provider(
 # Helpers — tiny async callables that simulate the two MFA providers.
 # ---------------------------------------------------------------------------
 
+
 class MockTelegramProvider:
     def __init__(self, send_returns=True, wait_code="123456", wait_delay=0.0):
         self.send_returns = send_returns
@@ -82,12 +82,15 @@ class MockTelegramProvider:
 async def _instant_none(_channel: str) -> str | None:
     return None
 
+
 async def _delayed_code(_channel: str) -> str | None:
     await asyncio.sleep(0.05)
     return "654321"
 
+
 async def _instant_code(_channel: str) -> str | None:
     return "654321"
+
 
 async def _raising_provider(_channel: str) -> str | None:
     raise RuntimeError("Something went wrong")
@@ -148,9 +151,10 @@ async def test_execution_order_verifies_send_prompt_runs_first():
 
     class OrderedTelegramProvider:
         async def send_prompt(self, channel):
-            await asyncio.sleep(0.01) # takes a bit
+            await asyncio.sleep(0.01)  # takes a bit
             events.append("telegram_sent")
             return True
+
         async def wait_for_reply(self):
             events.append("telegram_wait")
             return "123"
@@ -162,6 +166,9 @@ async def test_execution_order_verifies_send_prompt_runs_first():
     await _dual_mfa_provider(OrderedTelegramProvider(), tracking_stdin, "SMS")
 
     # verify that telegram_sent is strictly before stdin_called
-    assert events == ["telegram_sent", "telegram_wait", "stdin_called"] or \
-           events == ["telegram_sent", "stdin_called", "telegram_wait"]
+    assert events == ["telegram_sent", "telegram_wait", "stdin_called"] or events == [
+        "telegram_sent",
+        "stdin_called",
+        "telegram_wait",
+    ]
     assert events[0] == "telegram_sent"
