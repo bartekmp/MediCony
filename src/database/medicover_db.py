@@ -23,8 +23,8 @@ from src.models import (
 
 
 class MedicoverDbLogic(BaseDbLogic):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, service_name: str = "Medicover"):
+        super().__init__(service_name)
 
         self._fernet = None
         encryption_key = get_config().encryption_key

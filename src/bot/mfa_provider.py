@@ -49,19 +49,11 @@ class TelegramMfaProvider:
                 else:
                     await message.reply("⚠️ Invalid code format. Please reply with exactly 6 digits.")
 
-    async def request_code(self, channel: str) -> str | None:
-        """
-        Send a Telegram message asking for the MFA code and wait for the user's reply.
-
-        Args:
-            channel: The MFA channel description (e.g., "Email", "SMS").
-
-        Returns:
-            The 6-digit code string, or None if the user didn't reply within the timeout.
-        """
+    async def send_prompt(self, channel: str) -> bool:
+        """Send the MFA prompt to the user and prepare to wait for their reply."""
         if not self.chat_id:
             log.error("MEDICONY_TELEGRAM_CHAT_ID is not set, cannot request MFA code")
-            return None
+            return False
 
         loop = asyncio.get_running_loop()
         self._pending_future = loop.create_future()
@@ -82,11 +74,21 @@ class TelegramMfaProvider:
             )
             self._mfa_message_id = sent_message.message_id
             log.debug(f"MFA code request sent via Telegram (message_id={self._mfa_message_id})")
+            return True
 
-            # Wait for the reply with timeout
+        except Exception as e:
+            log.error(f"Failed to request MFA code via Telegram: {e}")
+            self._pending_future = None
+            return False
+
+    async def wait_for_reply(self) -> str | None:
+        """Wait for the user's reply with the MFA code."""
+        if not self._pending_future:
+            return None
+
+        try:
             code = await asyncio.wait_for(self._pending_future, timeout=MFA_TIMEOUT_SECONDS)
             return code
-
         except asyncio.TimeoutError:
             log.error("MFA code request timed out — no reply received within the timeout period")
             await self.bot.send_message(
@@ -94,10 +96,40 @@ class TelegramMfaProvider:
                 text="⏰ MFA verification timed out. Authentication failed. The next login attempt will request a new code.",
                 parse_mode="html",
             )
+            # Clear fields on timeout
+            self._pending_future = None
+            self._mfa_message_id = None
             return None
+
+    async def send_verification_result(self, success: bool, message: str = ""):
+        """Send the result of the MFA verification to the user."""
+        if not self.chat_id:
+            return
+
+        status_text = "✅ <b>Verification successful</b>" if success else f"❌ <b>Verification failed</b>\n\n{message}"
+        try:
+            await self.bot.send_message(
+                chat_id=self.chat_id,
+                text=status_text,
+                parse_mode="html",
+                reply_to_message_id=self._mfa_message_id,
+            )
         except Exception as e:
-            log.error(f"Failed to request MFA code via Telegram: {e}")
-            return None
+            log.error(f"Failed to send verification result via Telegram: {e}")
         finally:
             self._pending_future = None
             self._mfa_message_id = None
+
+    async def request_code(self, channel: str) -> str | None:
+        """
+        Send a Telegram message asking for the MFA code and wait for the user's reply.
+
+        Args:
+            channel: The MFA channel description (e.g., "Email", "SMS").
+
+        Returns:
+            The 6-digit code string, or None if the user didn't reply within the timeout.
+        """
+        if await self.send_prompt(channel):
+            return await self.wait_for_reply()
+        return None

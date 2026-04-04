@@ -75,6 +75,9 @@ python_files = ["test_*.py"]
 pythonpath = ["."]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
+filterwarnings = [
+    "ignore:Field \"model_custom_emoji_id\" in UniqueGiftColors has conflict with protected namespace \"model_\":UserWarning",
+]
 
 [tool.semantic_release]
 branch = "main"

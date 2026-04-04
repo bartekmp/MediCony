@@ -3,6 +3,8 @@
 import asyncio
 import signal
 import sys
+import tomllib
+from pathlib import Path
 
 from dotenv import load_dotenv
 
@@ -97,8 +99,21 @@ async def main():
             log.error(f"Unknown command: {args.command}")
 
 
+def _get_version() -> str | None:
+    try:
+        pyproject_path = Path(__file__).parent / "pyproject.toml"
+        with open(pyproject_path, "rb") as f:
+            return tomllib.load(f).get("project", {}).get("version")
+    except Exception:
+        return None
+
+
 if __name__ == "__main__":
-    log.info("⮦ Started MediCony")
+    version = _get_version()
+    if version:
+        log.info(f"⮦ Started MediCony v{version}")
+    else:
+        log.info("⮦ Started MediCony")
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
@@ -107,4 +122,7 @@ if __name__ == "__main__":
         log.error(f"Unexpected error: {e}")
         sys.exit(1)
     finally:
-        log.info("↳ Finished MediCony")
+        if version:
+            log.info(f"↳ Finished MediCony v{version}")
+        else:
+            log.info("↳ Finished MediCony")

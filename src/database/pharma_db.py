@@ -13,8 +13,8 @@ from src.models import MedicineModel
 
 
 class PharmaDbLogic(BaseDbLogic):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, service_name: str = "Medicine"):
+        super().__init__(service_name)
 
     def save_medicine(self, medicine) -> int:
         """Save a medicine to the database and return its ID."""

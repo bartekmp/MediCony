@@ -14,7 +14,8 @@ from src.models import Base
 
 
 class BaseDbLogic:
-    def __init__(self):
+    def __init__(self, service_name: str):
+        self.service_name = service_name
         self._lock = threading.RLock()  # Reentrant lock for thread safety
         self._conn_params = {
             "host": os.environ.get("POSTGRES_HOST", "localhost"),
@@ -38,7 +39,7 @@ class BaseDbLogic:
             Base.metadata.create_all(bind=self.engine)
 
             log.info(
-                f"Connected to PostgreSQL database at {self._conn_params['host']}:{self._conn_params['port']} using SQLAlchemy"
+                f"[{self.service_name}] Connected to PostgreSQL database at {self._conn_params['host']}:{self._conn_params['port']} using SQLAlchemy"
             )
         except Exception as e:
             log.error(f"Failed to connect to PostgreSQL: {e}")
