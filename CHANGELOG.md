@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v2.4.0 (2026-04-04)
+
+### Features
+
+- **mfa**: Handle Medicover verification code limit and active cooldowns
+  ([#83](https://github.com/bartekmp/MediCony/pull/83),
+  [`a848888`](https://github.com/bartekmp/MediCony/commit/a848888e80411397cf0a5b758e7e45acefeba9d6))
+
+
 ## v2.3.1 (2026-04-04)
 
 ### Improvement
