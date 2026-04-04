@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v2.3.1 (2026-04-04)
+
+### Improvement
+
+- Disable stdin MFA provider in non-interactive environments
+  ([#81](https://github.com/bartekmp/MediCony/pull/81),
+  [`4c90a04`](https://github.com/bartekmp/MediCony/commit/4c90a04910fde5849ce437af70fc70f6110a2ba4))
+
+
 ## v2.3.0 (2026-04-04)
 
 ### Feature
