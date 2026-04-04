@@ -24,7 +24,9 @@ async def stdin_mfa_provider(channel: str) -> str | None:
         # Run the blocking input() in a thread executor to avoid blocking the event loop
         code = await loop.run_in_executor(
             None,
-            lambda: input(f"\n🔐 Enter the 6-digit MFA code sent to you via {channel}: "),
+            lambda: input(
+                f"\n🔐 Enter the 6-digit MFA code sent to you via {channel}:\n\t"
+            ),
         )
         code = code.strip()
         if not code:

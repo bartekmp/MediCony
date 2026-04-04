@@ -233,9 +233,17 @@ class MediCony:
         mfa_provider = TelegramMfaProvider(telegram_bot.bot, telegram_bot.dp)
 
         async def dual_mfa_provider(channel: str):
-            t1 = asyncio.create_task(mfa_provider.request_code(channel))
+            tasks = set()
+
+            # Send Telegram prompt first so its logs appear before stdin prompt
+            if await mfa_provider.send_prompt(channel):
+                t1 = asyncio.create_task(mfa_provider.wait_for_reply())
+                tasks.add(t1)
+            else:
+                t1 = None
+
             t2 = asyncio.create_task(stdin_mfa_provider(channel))
-            tasks = {t1, t2}
+            tasks.add(t2)
 
             while tasks:
                 done, tasks = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
@@ -257,7 +265,7 @@ class MediCony:
                             pass
 
                     # Visual cue if CLI lost the race
-                    if result_task == t1:
+                    if t1 and result_task == t1:
                         print("\n[MFA code provided via Telegram]")
 
                     return res
@@ -272,6 +280,13 @@ class MediCony:
             return None
 
         self.medicover_app.set_mfa_code_provider(dual_mfa_provider)
+
+        async def report_mfa_result(success: bool, message: str):
+            # Only report to Telegram if it's initialized and was part of the process
+            if mfa_provider:
+                await mfa_provider.send_verification_result(success, message)
+
+        self.medicover_app.set_mfa_result_callback(report_mfa_result)
 
         # Run bot and main loop as cancellable tasks; cancel on shutdown for fast exit
         bot_task = asyncio.create_task(telegram_bot.dispatch_interactive_bot(shutdown_event))

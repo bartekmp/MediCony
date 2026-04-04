@@ -75,6 +75,11 @@ class MedicoverApp:
         for _alias, (authenticator, _client) in self.api_client._accounts.items():
             authenticator.mfa_code_provider = provider
 
+    def set_mfa_result_callback(self, callback: Callable[[bool, str], Awaitable[None]]):
+        """Set the MFA result callback on all registered account authenticators."""
+        for _alias, (authenticator, _client) in self.api_client._accounts.items():
+            authenticator.mfa_result_callback = callback
+
     async def switch_account(self, alias: str):
         if alias == self.default_account:
             return
