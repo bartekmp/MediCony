@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v2.3.0 (2026-04-04)
+
+### Feature
+
+- Enhance MFA transparency, telemetry, and startup logging
+  ([#80](https://github.com/bartekmp/MediCony/pull/80),
+  [`51430bf`](https://github.com/bartekmp/MediCony/commit/51430bfa153d86349815f2e2563f56ca72237ca7))
+
+
 ## v2.2.3 (2026-04-04)
 
 ### Update
