@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v2.4.3 (2026-04-07)
+
+### Improvement
+
+- Replace N+1 appointment existence checks with a single bulk SELECT
+  ([#86](https://github.com/bartekmp/MediCony/pull/86),
+  [`af214a5`](https://github.com/bartekmp/MediCony/commit/af214a5370d4232ca943d241259878c82aaafecc))
+
+
 ## v2.4.2 (2026-04-05)
 
 ### Bug Fixes
