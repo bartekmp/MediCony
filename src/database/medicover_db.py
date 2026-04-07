@@ -5,7 +5,7 @@ Medicover-specific database logic using SQLAlchemy for PostgreSQL.
 import datetime
 from typing import List, Optional, Tuple
 
-from sqlalchemy import and_
+from sqlalchemy import and_, or_
 from sqlalchemy.exc import SQLAlchemyError
 from cryptography.fernet import Fernet, InvalidToken
 
@@ -58,6 +58,34 @@ class MedicoverDbLogic(BaseDbLogic):
             except SQLAlchemyError as e:
                 log.error(f"Error clearing database: {e}")
                 raise
+
+    def get_existing_appointment_keys(self, appointments: List[MedicoverAppointment]) -> set:
+        """Return set of (clinic_id, doctor_id, date) tuples that already exist in DB.
+
+        Replaces N individual appointment_exists() calls with a single query.
+        """
+        if not appointments:
+            return set()
+        with self._lock:
+            try:
+                with self.get_session() as session:
+                    conditions = [
+                        and_(
+                            MedicoverAppointmentModel.clinic == a.clinic.id,
+                            MedicoverAppointmentModel.doctor == a.doctor.id,
+                            MedicoverAppointmentModel.date == a.date_time,
+                        )
+                        for a in appointments
+                    ]
+                    rows = session.query(
+                        MedicoverAppointmentModel.clinic,
+                        MedicoverAppointmentModel.doctor,
+                        MedicoverAppointmentModel.date,
+                    ).filter(or_(*conditions)).all()
+                    return {(r.clinic, r.doctor, r.date) for r in rows}
+            except SQLAlchemyError as e:
+                log.error(f"Error fetching existing appointment keys: {e}")
+                return set()
 
     def appointment_exists(self, appointment: MedicoverAppointment) -> bool:
         """Check if an appointment already exists in the database."""

@@ -597,6 +597,102 @@ def test_dbclient_save_appointments_and_filter_old(db_client):
         assert appointments[1].doctor == doctor.id
 
 
+def test_dbclient_save_appointments_filters_existing(db_client):
+    """Appointments already in the DB must be filtered out, new ones inserted."""
+    clinic = IdValue(10, "c")
+    doctor = IdValue(20, "d")
+    specialty = IdValue(30, "s")
+
+    existing = Appointment.initialize(
+        clinic=clinic,
+        doctor=doctor,
+        date_time="2024-01-01 09:00:00",
+        specialty=specialty,
+        visit_type="v",
+        booking_string="b",
+    )
+    new_ap = Appointment.initialize(
+        clinic=clinic,
+        doctor=doctor,
+        date_time="2024-01-02 09:00:00",
+        specialty=specialty,
+        visit_type="v",
+        booking_string="b",
+    )
+
+    # Pre-insert the existing appointment
+    db_client.db.add_appointment_history(existing)
+
+    result = db_client.save_appointments_and_filter_old([existing, new_ap])
+
+    assert len(result) == 1
+    assert result[0].date_time == new_ap.date_time
+
+    with db_client.db.get_session() as session:
+        rows = session.query(MedicoverAppointmentModel).filter_by(clinic=clinic.id, doctor=doctor.id).all()
+        assert len(rows) == 2  # original + the one new appointment
+
+
+def test_dbclient_save_appointments_all_existing(db_client):
+    """When all appointments already exist, nothing is inserted and an empty list is returned."""
+    clinic = IdValue(11, "c")
+    doctor = IdValue(21, "d")
+    specialty = IdValue(31, "s")
+
+    ap = Appointment.initialize(
+        clinic=clinic,
+        doctor=doctor,
+        date_time="2024-03-01 08:00:00",
+        specialty=specialty,
+        visit_type="v",
+        booking_string="b",
+    )
+    db_client.db.add_appointment_history(ap)
+
+    result = db_client.save_appointments_and_filter_old([ap])
+
+    assert result == []
+
+    with db_client.db.get_session() as session:
+        rows = session.query(MedicoverAppointmentModel).filter_by(clinic=clinic.id, doctor=doctor.id).all()
+        assert len(rows) == 1  # no duplicate inserted
+
+
+def test_get_existing_appointment_keys_empty_input(db_client):
+    """Empty input returns an empty set without hitting the DB."""
+    keys = db_client.db.get_existing_appointment_keys([])
+    assert keys == set()
+
+
+def test_get_existing_appointment_keys_bulk(db_client):
+    """Returns keys only for appointments that actually exist."""
+    clinic = IdValue(50, "c")
+    doctor = IdValue(60, "d")
+    specialty = IdValue(70, "s")
+
+    ap1 = Appointment.initialize(
+        clinic=clinic, doctor=doctor, date_time="2024-06-01 10:00:00",
+        specialty=specialty, visit_type="v", booking_string="b",
+    )
+    ap2 = Appointment.initialize(
+        clinic=clinic, doctor=doctor, date_time="2024-06-02 10:00:00",
+        specialty=specialty, visit_type="v", booking_string="b",
+    )
+    ap3 = Appointment.initialize(
+        clinic=clinic, doctor=doctor, date_time="2024-06-03 10:00:00",
+        specialty=specialty, visit_type="v", booking_string="b",
+    )
+    db_client.db.add_appointment_history(ap1)
+    db_client.db.add_appointment_history(ap3)
+
+    keys = db_client.db.get_existing_appointment_keys([ap1, ap2, ap3])
+
+    assert len(keys) == 2
+    assert (ap1.clinic.id, ap1.doctor.id, ap1.date_time) in keys
+    assert (ap3.clinic.id, ap3.doctor.id, ap3.date_time) in keys
+    assert (ap2.clinic.id, ap2.doctor.id, ap2.date_time) not in keys
+
+
 def test_dbclient_list_booked_appointments(db_client):
     # Create appointments
     appointment1 = MedicoverAppointmentModel(

@@ -64,12 +64,11 @@ class MedicoverDbClient:
             self.db.update_appointment(appointment)
 
     def save_appointments_and_filter_old(self, appointments: List[MedicoverAppointment]) -> List[MedicoverAppointment]:
-        new_appointments = []
-        for appointment in appointments:
-            # Check if appointment in the local database
-            if not self.db.appointment_exists(appointment):
-                # If not, append it to the return list
-                new_appointments.append(appointment)
+        # Single bulk SELECT instead of N individual existence checks
+        existing_keys = self.db.get_existing_appointment_keys(appointments)
+        new_appointments = [
+            a for a in appointments if (a.clinic.id, a.doctor.id, a.date_time) not in existing_keys
+        ]
 
         # Batch insert all new appointments with a single commit to reduce WAL IO
         if new_appointments:
