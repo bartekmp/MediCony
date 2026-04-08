@@ -524,15 +524,19 @@ Viewing logs via `/logs`:
 
 ### Docker Deployment
 
+> **`/dev/shm` size requirement:** MediCony uses [PharmaRadar](https://github.com/bartekmp/pharmaradar) for medicine search, which runs headless Chrome and stores its profile on `/dev/shm` by default. Docker containers ship with only 64 MB of `/dev/shm` — too small for Chrome. **Always set `/dev/shm` to at least 512 MB** when using medicine search features.
+
 #### Single Container
 ```bash
 # Blocking mode (attached)
 docker run -it --rm --env-file=.env \
+  --shm-size=512m \
   -v $(pwd)/log:/app/log \
   medicony start
 
 # Daemon mode (detached)
 docker run -d --name medicony --env-file=.env \
+  --shm-size=512m \
   -v $(pwd)/log:/app/log \
   medicony start
 ```
@@ -540,21 +544,28 @@ docker run -d --name medicony --env-file=.env \
 #### Docker Compose
 Create `docker-compose.yml`:
 ```yaml
-version: '3.8'
-
 services:
   medicony:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: medicony:latest
     container_name: medicony
     command: ["start"]
-    env_file: .env
+    env_file:
+      - .env
+    environment:
+      - HOME=/dev/shm/medicony-home
     volumes:
       - ./log:/app/log
+    tmpfs:
+      - /tmp:size=256m,noexec,nosuid,nodev
+      - /dev/shm:size=512m
     restart: unless-stopped
     deploy:
       resources:
         limits:
-          memory: 1G
+          memory: 1024m
           cpus: '0.5'
 ```
 

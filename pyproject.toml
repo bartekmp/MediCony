@@ -101,6 +101,7 @@ allowed_tags = [
     "improvement",
     "enhancement",
     "update",
+    "doc"
 ]
 default_bump_level = 0
 parse_squash_commits = true
