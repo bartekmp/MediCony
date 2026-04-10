@@ -12,7 +12,7 @@ from src.medicover.auth import Authenticator, LoginError, MfaGateError, MfaVerif
 class HTTPClient:
     def __init__(self, authenticator: Authenticator):
         self.authenticator = authenticator
-        self.session: Session = Session.__new__(Session)
+        self.session: Session = Session()
         self.headers = None
 
     @tenacity.retry(
