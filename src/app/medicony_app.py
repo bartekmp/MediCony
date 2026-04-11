@@ -53,98 +53,19 @@ class MediCony:
                 log.error(" - Set MEDICONY_INTERACTIVE=true (if you strictly know stdin is available via pipe)")
                 sys.exit(1)
 
+    def __getattr__(self, name: str):
+        """Delegate attribute lookups to medicover_app or medicine_app."""
+        for app in (self.medicover_app, self.medicine_app):
+            if app is not None and hasattr(app, name):
+                return getattr(app, name)
+        raise AttributeError(f"'{type(self).__name__}' object has no attribute '{name}'")
+
     async def authenticate(self):
         """Authenticate with Medicover API."""
         if self.medicover_app:
             await self.medicover_app.authenticate()
         else:
             log.info("MedicoverApp not initialized (command contains 'medicine' and is not 'start')")
-
-    # Medicover-related commands
-    async def find_appointment(self):
-        if self.medicover_app:
-            await self.medicover_app.find_appointment()
-        else:
-            log.info("MedicoverApp not initialized (command contains 'medicine' and is not 'start')")
-
-    async def book_appointment(self):
-        if self.medicover_app:
-            await self.medicover_app.book_appointment()
-        else:
-            log.info("MedicoverApp not initialized (command contains 'medicine' and is not 'start')")
-
-    async def list_filters(self):
-        if self.medicover_app:
-            await self.medicover_app.list_filters()
-        else:
-            log.info("MedicoverApp not initialized (command contains 'medicine' and is not 'start')")
-
-    def add_watch(self):
-        if self.medicover_app:
-            self.medicover_app.add_watch()
-        else:
-            log.info("MedicoverApp not initialized (command contains 'medicine' and is not 'start')")
-
-    async def edit_watch(self):
-        if self.medicover_app:
-            await self.medicover_app.edit_watch()
-        else:
-            log.info("MedicoverApp not initialized (command contains 'medicine' and is not 'start')")
-
-    def remove_watch(self):
-        if self.medicover_app:
-            self.medicover_app.remove_watch()
-        else:
-            log.info("MedicoverApp not initialized (command contains 'medicine' and is not 'start')")
-
-    async def list_watches(self):
-        if self.medicover_app:
-            await self.medicover_app.list_watches()
-        else:
-            log.info("MedicoverApp not initialized (command contains 'medicine' and is not 'start')")
-
-    async def list_appointments(self):
-        if self.medicover_app:
-            await self.medicover_app.list_appointments()
-        else:
-            log.info("MedicoverApp not initialized (command contains 'medicine' and is not 'start')")
-
-    async def cancel_appointment(self):
-        if self.medicover_app:
-            await self.medicover_app.cancel_appointment()
-        else:
-            log.info("MedicoverApp not initialized (command contains 'medicine' and is not 'start')")
-
-    # Medicine-related commands
-    def add_medicine(self):
-        if self.medicine_app:
-            self.medicine_app.add_medicine()
-        else:
-            log.info("MedicineApp not initialized (command does not contain 'medicine' or is not 'start')")
-
-    def remove_medicine(self):
-        if self.medicine_app:
-            self.medicine_app.remove_medicine()
-        else:
-            log.info("MedicineApp not initialized (command does not contain 'medicine' or is not 'start')")
-
-    def list_medicines(self):
-        if self.medicine_app:
-            self.medicine_app.list_medicines()
-        else:
-            log.info("MedicineApp not initialized (command does not contain 'medicine' or is not 'start')")
-
-    def edit_medicine(self):
-        if self.medicine_app:
-            self.medicine_app.edit_medicine()
-        else:
-            log.info("MedicineApp not initialized (command does not contain 'medicine' or is not 'start')")
-
-    async def search_medicine(self):
-        if self.medicine_app:
-            await self.medicine_app.search_medicine()
-        else:
-            log.info("MedicineApp not initialized (command does not contain 'medicine' or is not 'start')")
 
     async def daemon_mode(
         self,
@@ -181,11 +102,11 @@ class MediCony:
             try:
                 if self.medicover_app:
                     log.info("=== Starting Medicover appointment search")
-                    await self._search_appointments()
+                    await self.medicover_app.search_appointments()
 
                 if self.medicine_app:
                     log.info("=== Starting Medicine search")
-                    await self._search_medicines()
+                    await self.medicine_app.search_medicines()
             except Exception as e:
                 log.error(f"Error in daemon cycle: {str(e)}")
 
@@ -221,18 +142,6 @@ class MediCony:
                 break
 
         log.info("Daemon mode stopped")
-
-    async def _search_appointments(self):
-        if self.medicover_app:
-            await self.medicover_app.search_appointments()
-        else:
-            log.info("MedicoverApp not initialized (command contains 'medicine' and is not 'start')")
-
-    async def _search_medicines(self):
-        if self.medicine_app:
-            await self.medicine_app.search_medicines()
-        else:
-            log.info("MedicineApp not initialized (command does not contain 'medicine' or is not 'start')")
 
     # Enhanced version of daemon_worker that uses a singleton TelegramBot
     async def daemon_worker(self, sleep_period_s: int, shutdown_event: asyncio.Event):
