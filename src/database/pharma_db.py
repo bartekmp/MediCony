@@ -1,10 +1,12 @@
 """
-Pharma-specific database logic using SQLAlchemy for PostgreSQL.
+Pharma database client.
 """
 
 import datetime
-from typing import List, Optional, Tuple
+from typing import List, Optional
 
+from pharmaradar import Medicine as PharmaRadarMedicine
+from pharmaradar import MedicineDatabaseInterface
 from sqlalchemy.exc import SQLAlchemyError
 
 from src.database.base_db import BaseDbLogic
@@ -12,16 +14,30 @@ from src.logger import log
 from src.models import MedicineModel
 
 
-class PharmaDbLogic(BaseDbLogic):
-    def __init__(self, service_name: str = "Medicine"):
-        super().__init__(service_name)
+class PharmaDbClient(BaseDbLogic, MedicineDatabaseInterface):
+    def __init__(self):
+        super().__init__("Medicine")
 
-    def save_medicine(self, medicine) -> int:
-        """Save a medicine to the database and return its ID."""
+    def _row_to_medicine(self, row: MedicineModel) -> PharmaRadarMedicine:
+        return PharmaRadarMedicine(
+            id=row.id,
+            name=row.name,
+            dosage=row.dosage,
+            amount=row.amount,
+            location=row.location,
+            radius_km=row.radius_km,
+            max_price=row.max_price,
+            min_availability=row.min_availability,
+            title=row.title,
+            created_at=row.created_at,
+            last_search_at=row.last_search_at,
+            active=row.active,
+        )
+
+    def save_medicine(self, medicine: PharmaRadarMedicine) -> int:
         with self._lock:
             try:
                 with self.get_session() as session:
-                    # Convert enum to string value if needed
                     min_availability_value = medicine.min_availability
                     if hasattr(min_availability_value, "value"):
                         min_availability_value = min_availability_value.value
@@ -47,61 +63,26 @@ class PharmaDbLogic(BaseDbLogic):
                 log.error(f"Error saving medicine: {e}")
                 raise
 
-    def get_medicine(self, medicine_id: int) -> Optional[Tuple]:
-        """Get a medicine by ID."""
+    def get_medicine(self, medicine_id: int) -> Optional[PharmaRadarMedicine]:
         with self._lock:
             try:
                 with self.get_session() as session:
-                    medicine = session.query(MedicineModel).filter(MedicineModel.id == medicine_id).first()
-                    if medicine:
-                        return (
-                            medicine.id,
-                            medicine.name,
-                            medicine.dosage,
-                            medicine.amount,
-                            medicine.location,
-                            medicine.radius_km,
-                            medicine.max_price,
-                            medicine.min_availability,
-                            medicine.title,
-                            medicine.created_at.isoformat() if medicine.created_at is not None else None,
-                            medicine.last_search_at.isoformat() if medicine.last_search_at is not None else None,
-                            medicine.active,
-                        )
-                    return None
+                    row = session.query(MedicineModel).filter(MedicineModel.id == medicine_id).first()
+                    return self._row_to_medicine(row) if row else None
             except SQLAlchemyError as e:
                 log.error(f"Error getting medicine: {e}")
                 return None
 
-    def get_medicines(self) -> List[Tuple]:
-        """Get all medicines."""
+    def get_medicines(self) -> List[PharmaRadarMedicine]:
         with self._lock:
             try:
                 with self.get_session() as session:
-                    medicines = session.query(MedicineModel).all()
-                    return [
-                        (
-                            m.id,
-                            m.name,
-                            m.dosage,
-                            m.amount,
-                            m.location,
-                            m.radius_km,
-                            m.max_price,
-                            m.min_availability,
-                            m.title,
-                            m.created_at.isoformat() if m.created_at is not None else None,
-                            m.last_search_at.isoformat() if m.last_search_at is not None else None,
-                            m.active,
-                        )
-                        for m in medicines
-                    ]
+                    return [self._row_to_medicine(row) for row in session.query(MedicineModel).all()]
             except SQLAlchemyError as e:
                 log.error(f"Error getting medicines: {e}")
                 return []
 
     def remove_medicine(self, medicine_id: int) -> bool:
-        """Remove a medicine from the database."""
         with self._lock:
             try:
                 with self.get_session() as session:
@@ -115,6 +96,7 @@ class PharmaDbLogic(BaseDbLogic):
     def update_medicine(
         self,
         medicine_id: int,
+        *,
         name: Optional[str] = None,
         dosage: Optional[str] = None,
         amount: Optional[str] = None,
@@ -126,15 +108,12 @@ class PharmaDbLogic(BaseDbLogic):
         last_search_at: Optional[datetime.datetime] = None,
         active: Optional[bool] = None,
     ) -> bool:
-        """Update a medicine in the database."""
         with self._lock:
             try:
                 with self.get_session() as session:
-                    medicine = session.query(MedicineModel).filter(MedicineModel.id == medicine_id).first()
-                    if not medicine:
+                    if not session.query(MedicineModel).filter(MedicineModel.id == medicine_id).first():
                         return False
 
-                    # Build update dictionary for non-None values
                     update_data = {}
                     if name is not None:
                         update_data["name"] = name
@@ -149,7 +128,6 @@ class PharmaDbLogic(BaseDbLogic):
                     if max_price is not None:
                         update_data["max_price"] = max_price
                     if min_availability is not None:
-                        # Convert enum to string value if needed
                         min_availability_value = min_availability
                         if hasattr(min_availability_value, "value"):
                             min_availability_value = min_availability_value.value  # type: ignore
@@ -161,10 +139,8 @@ class PharmaDbLogic(BaseDbLogic):
                     if active is not None:
                         update_data["active"] = active
 
-                    # Perform the update using the proper SQLAlchemy method
                     if update_data:
                         session.query(MedicineModel).filter_by(id=medicine_id).update(update_data)
-
                     session.commit()
                     return True
             except SQLAlchemyError as e:
