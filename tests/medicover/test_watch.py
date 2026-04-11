@@ -9,25 +9,29 @@ from datetime import date, time, timedelta
 
 from pytest import raises
 
-from src.medicover.watch import Watch, WatchActiveStatus, WatchTimeRange, is_within
+from src.id_value_util import IdValue
+from src.medicover.watch import Watch, WatchActiveStatus, WatchTimeRange, WatchType, is_within, parse_exclusions
 
 
 def test_watch_invalid_initialization():
     """Test that Watch initialization fails with invalid arguments."""
     # Act & Assert
-    with raises(ValueError):
-        Watch.from_tuple((1, 2))  # Too few arguments
+    with raises(TypeError):
+        Watch(id=1)  # Missing required fields: region, city, specialty
 
 
 def test_watch_initialization_with_defaults():
     """Test initializing a Watch with minimal arguments and default values."""
-    # Arrange
-    init = (1, 2, "aaa", [3], 4, 5, date.min)
+    watch = Watch(
+        id=1,
+        region=IdValue(2),
+        city="aaa",
+        specialty=[IdValue(3)],
+        clinic=IdValue(4),
+        doctor=IdValue(5),
+        start_date=date.min,
+    )
 
-    # Act
-    watch = Watch.from_tuple(init)
-
-    # Assert
     assert watch.id == 1
     assert watch.region is not None and watch.region.id == 2
     assert watch.city == "aaa"
@@ -39,13 +43,16 @@ def test_watch_initialization_with_defaults():
 
 def test_watch_initialization_with_defaults_multiple_specialties():
     """Test initializing a Watch with multiple specialties."""
-    # Arrange
-    init = (1, 2, "aaa", [3, 6, 9], 4, 5, date.min)
+    watch = Watch(
+        id=1,
+        region=IdValue(2),
+        city="aaa",
+        specialty=[IdValue(3), IdValue(6), IdValue(9)],
+        clinic=IdValue(4),
+        doctor=IdValue(5),
+        start_date=date.min,
+    )
 
-    # Act
-    watch = Watch.from_tuple(init)
-
-    # Assert
     assert watch.id == 1
     assert watch.region is not None and watch.region.id == 2
     assert watch.city == "aaa"
@@ -59,19 +66,18 @@ def test_watch_initialization_with_defaults_multiple_specialties():
 
 def test_watch_initialization_full_with_dedicated_types():
     """Test initializing a Watch with full set of parameters using dedicated types."""
-    init = (
-        11,
-        22,
-        "bbb",
-        [33],
-        44,
-        55,
-        date.fromisoformat("2137-09-01"),
-        date.fromisoformat("2137-09-17"),
-        WatchTimeRange("12:12:12-13:13:13"),
-        False,
+    watch = Watch(
+        id=11,
+        region=IdValue(22),
+        city="bbb",
+        specialty=[IdValue(33)],
+        clinic=IdValue(44),
+        doctor=IdValue(55),
+        start_date=date.fromisoformat("2137-09-01"),
+        end_date=date.fromisoformat("2137-09-17"),
+        time_range=WatchTimeRange("12:12:12-13:13:13"),
+        auto_book=False,
     )
-    watch = Watch.from_tuple(init)
 
     assert watch.id == 11
     assert watch.region is not None and watch.region.id == 22
@@ -87,19 +93,18 @@ def test_watch_initialization_full_with_dedicated_types():
 
 def test_watch_initialization_full_with_dedicated_types_multiple_specialties():
     """Test initializing a Watch with full set of parameters and multiple specialties."""
-    init = (
-        11,
-        22,
-        "bbb",
-        [33, 66, 99],
-        44,
-        55,
-        date.fromisoformat("2137-09-01"),
-        date.fromisoformat("2137-09-17"),
-        WatchTimeRange("12:12:12-13:13:13"),
-        False,
+    watch = Watch(
+        id=11,
+        region=IdValue(22),
+        city="bbb",
+        specialty=[IdValue(33), IdValue(66), IdValue(99)],
+        clinic=IdValue(44),
+        doctor=IdValue(55),
+        start_date=date.fromisoformat("2137-09-01"),
+        end_date=date.fromisoformat("2137-09-17"),
+        time_range=WatchTimeRange("12:12:12-13:13:13"),
+        auto_book=False,
     )
-    watch = Watch.from_tuple(init)
 
     assert watch.id == 11
     assert watch.region is not None and watch.region.id == 22
@@ -117,19 +122,18 @@ def test_watch_initialization_full_with_dedicated_types_multiple_specialties():
 
 def test_watch_initialization_full_with_strings():
     """Test initializing a Watch with full set of parameters using string values."""
-    init = (
-        11,
-        22,
-        "xxxx",
-        [33],
-        44,
-        55,
-        "2137-09-01",
-        "2137-09-17",
-        "12:12:12-13:13:13",
-        True,
+    watch = Watch(
+        id=11,
+        region=IdValue(22),
+        city="xxxx",
+        specialty=[IdValue(33)],
+        clinic=IdValue(44),
+        doctor=IdValue(55),
+        start_date=date.fromisoformat("2137-09-01"),
+        end_date=date.fromisoformat("2137-09-17"),
+        time_range=WatchTimeRange("12:12:12-13:13:13"),
+        auto_book=True,
     )
-    watch = Watch.from_tuple(init)
 
     assert watch.id == 11
     assert watch.region is not None and watch.region.id == 22
@@ -145,21 +149,20 @@ def test_watch_initialization_full_with_strings():
 
 def test_watch_to_string():
     """Test the string representation of a Watch object."""
-    init = (
-        91,
-        92,
-        "zzz",
-        [93],
-        94,
-        95,
-        date.fromisoformat("2027-02-21"),
-        date.fromisoformat("2027-09-17"),
-        WatchTimeRange("10:30"),
-        False,
-        "doctor:111,222;clinic:333,444",
-        "Standard",
+    watch = Watch(
+        id=91,
+        region=IdValue(92),
+        city="zzz",
+        specialty=[IdValue(93)],
+        clinic=IdValue(94),
+        doctor=IdValue(95),
+        start_date=date.fromisoformat("2027-02-21"),
+        end_date=date.fromisoformat("2027-09-17"),
+        time_range=WatchTimeRange("10:30"),
+        auto_book=False,
+        exclusions=parse_exclusions("doctor:111,222;clinic:333,444"),
+        type=WatchType.STANDARD,
     )
-    watch = Watch.from_tuple(init)
 
     expected = "ID 91\nRegion: 92\nCity: zzz\nType: Standard\nSpecialty: 93\nClinic: 94\nDoctor: 95\nDate range: 2027-02-21–2027-09-17\nTime range: 10:30:00-*\nAutobook: False\nExclusions: doctor:111,222;clinic:333,444\nAccount: default"
 
@@ -168,21 +171,20 @@ def test_watch_to_string():
 
 def test_watch_to_string_multiple_specialties():
     """Test the string representation of a Watch object with multiple specialties."""
-    init = (
-        91,
-        92,
-        "zzz",
-        [93, 96, 99],
-        94,
-        95,
-        date.fromisoformat("2027-02-21"),
-        date.fromisoformat("2027-09-17"),
-        WatchTimeRange("10:30"),
-        False,
-        None,
-        "Standard",
+    watch = Watch(
+        id=91,
+        region=IdValue(92),
+        city="zzz",
+        specialty=[IdValue(93), IdValue(96), IdValue(99)],
+        clinic=IdValue(94),
+        doctor=IdValue(95),
+        start_date=date.fromisoformat("2027-02-21"),
+        end_date=date.fromisoformat("2027-09-17"),
+        time_range=WatchTimeRange("10:30"),
+        auto_book=False,
+        exclusions=None,
+        type=WatchType.STANDARD,
     )
-    watch = Watch.from_tuple(init)
 
     expected = "ID 91\nRegion: 92\nCity: zzz\nType: Standard\nSpecialty: 93, 96, 99\nClinic: 94\nDoctor: 95\nDate range: 2027-02-21–2027-09-17\nTime range: 10:30:00-*\nAutobook: False\nExclusions: None\nAccount: default"
 
@@ -191,21 +193,20 @@ def test_watch_to_string_multiple_specialties():
 
 def test_watch_to_string_with_descriptive_values():
     """Test the string representation of a Watch object with descriptive values."""
-    init = (
-        51,
-        52,
-        "yyy",
-        [53],
-        54,
-        55,
-        "2137-09-01",
-        "2137-09-17",
-        "12:12:12-13:13:13",
-        True,
-        None,
-        "DiagnosticProcedure",
+    watch = Watch(
+        id=51,
+        region=IdValue(52),
+        city="yyy",
+        specialty=[IdValue(53)],
+        clinic=IdValue(54),
+        doctor=IdValue(55),
+        start_date=date.fromisoformat("2137-09-01"),
+        end_date=date.fromisoformat("2137-09-17"),
+        time_range=WatchTimeRange("12:12:12-13:13:13"),
+        auto_book=True,
+        exclusions=None,
+        type=WatchType.EXAMINATION,
     )
-    watch = Watch.from_tuple(init)
     watch.region.value = "region52"
     watch.specialty[0].value = "specialty53"
     if watch.clinic is not None:
@@ -219,22 +220,20 @@ def test_watch_to_string_with_descriptive_values():
 
 def test_watch_to_string_with_descriptive_values_multiple_specialties():
     """Test the string representation of a Watch object with descriptive values and multiple specialties."""
-    init = (
-        51,
-        52,
-        "yyy",
-        [53, 56, 59],
-        54,
-        55,
-        "2137-09-01",
-        "2137-09-17",
-        "12:12:12-13:13:13",
-        True,
-        "doctor:111,222,333",
-        "DiagnosticProcedure",
+    watch = Watch(
+        id=51,
+        region=IdValue(52),
+        city="yyy",
+        specialty=[IdValue(53), IdValue(56), IdValue(59)],
+        clinic=IdValue(54),
+        doctor=IdValue(55),
+        start_date=date.fromisoformat("2137-09-01"),
+        end_date=date.fromisoformat("2137-09-17"),
+        time_range=WatchTimeRange("12:12:12-13:13:13"),
+        auto_book=True,
+        exclusions=parse_exclusions("doctor:111,222,333"),
+        type=WatchType.EXAMINATION,
     )
-    watch = Watch.from_tuple(init)
-    # Set descriptive values for the watch
     watch.region.value = "region52"
     watch.specialty[0].value = "specialty53"
     watch.specialty[1].value = "specialty56"
@@ -250,21 +249,20 @@ def test_watch_to_string_with_descriptive_values_multiple_specialties():
 
 def test_watch_to_short_str():
     """Test the short string representation of a Watch object."""
-    init = (
-        51,
-        52,
-        "yyy",
-        [53],
-        54,
-        55,
-        "2137-09-01",
-        "2137-09-17",
-        "12:15:36",
-        True,
-        None,
-        "DiagnosticProcedure",
+    watch = Watch(
+        id=51,
+        region=IdValue(52),
+        city="yyy",
+        specialty=[IdValue(53)],
+        clinic=IdValue(54),
+        doctor=IdValue(55),
+        start_date=date.fromisoformat("2137-09-01"),
+        end_date=date.fromisoformat("2137-09-17"),
+        time_range=WatchTimeRange("12:15:36"),
+        auto_book=True,
+        exclusions=None,
+        type=WatchType.EXAMINATION,
     )
-    watch = Watch.from_tuple(init)
     expected = "ID 51; r: 52; ci: yyy; t: DiagnosticProcedure; s: 53; cl: 54; d: 55; dr: 2137-09-01–2137-09-17; tr: 12:15:36-*; ab: True; excl: None; acc: default"
 
     assert watch.short_str() == expected
@@ -272,21 +270,20 @@ def test_watch_to_short_str():
 
 def test_watch_to_short_str_multiple_specialties():
     """Test the short string representation of a Watch object with multiple specialties."""
-    init = (
-        51,
-        52,
-        "yyy",
-        [53, 56, 59],
-        54,
-        55,
-        "2137-09-01",
-        "2137-09-17",
-        "12:15:36",
-        True,
-        "doctor:777,888,999",
-        "DiagnosticProcedure",
+    watch = Watch(
+        id=51,
+        region=IdValue(52),
+        city="yyy",
+        specialty=[IdValue(53), IdValue(56), IdValue(59)],
+        clinic=IdValue(54),
+        doctor=IdValue(55),
+        start_date=date.fromisoformat("2137-09-01"),
+        end_date=date.fromisoformat("2137-09-17"),
+        time_range=WatchTimeRange("12:15:36"),
+        auto_book=True,
+        exclusions=parse_exclusions("doctor:777,888,999"),
+        type=WatchType.EXAMINATION,
     )
-    watch = Watch.from_tuple(init)
     expected = "ID 51; r: 52; ci: yyy; t: DiagnosticProcedure; s: 53, 56, 59; cl: 54; d: 55; dr: 2137-09-01–2137-09-17; tr: 12:15:36-*; ab: True; excl: doctor:777,888,999; acc: default"
 
     assert watch.short_str() == expected
@@ -296,52 +293,51 @@ def test_watch_active_status():
     """Test the active status determination of a Watch object."""
     starting_point = date.today()
     threshold = 1  # days
-    w1 = Watch.from_tuple((
-        51,
-        52,
-        "yyy",
-        [53, 56, 59],
-        54,
-        55,
-        starting_point + timedelta(days=2),
-        "2137-09-17",
-        "12:15:36",
-        True,
-        None,
-        "DiagnosticProcedure",
-    ))
+    w1 = Watch(
+        id=51,
+        region=IdValue(52),
+        city="yyy",
+        specialty=[IdValue(53), IdValue(56), IdValue(59)],
+        clinic=IdValue(54),
+        doctor=IdValue(55),
+        start_date=starting_point + timedelta(days=2),
+        end_date=date.fromisoformat("2137-09-17"),
+        time_range=WatchTimeRange("12:15:36"),
+        auto_book=True,
+        type=WatchType.EXAMINATION,
+    )
     assert w1.is_active(threshold, starting_point) == WatchActiveStatus.INACTIVE
 
-    w2 = Watch.from_tuple((
-        51,
-        52,
-        "yyy",
-        [53, 56, 59],
-        54,
-        55,
-        starting_point - timedelta(days=10),
-        starting_point - timedelta(days=2),
-        "12:15:36",
-        True,
-        "clinic:123,456",
-        "DiagnosticProcedure",
-    ))
+    w2 = Watch(
+        id=51,
+        region=IdValue(52),
+        city="yyy",
+        specialty=[IdValue(53), IdValue(56), IdValue(59)],
+        clinic=IdValue(54),
+        doctor=IdValue(55),
+        start_date=starting_point - timedelta(days=10),
+        end_date=starting_point - timedelta(days=2),
+        time_range=WatchTimeRange("12:15:36"),
+        auto_book=True,
+        exclusions=parse_exclusions("clinic:123,456"),
+        type=WatchType.EXAMINATION,
+    )
     assert w2.is_active(threshold, starting_point) == WatchActiveStatus.EXPIRED
 
-    w3 = Watch.from_tuple((
-        51,
-        52,
-        "yyy",
-        [53, 56, 59],
-        54,
-        55,
-        starting_point,
-        starting_point + timedelta(days=10),
-        "12:15:36",
-        True,
-        "doctor:123,456",
-        "DiagnosticProcedure",
-    ))
+    w3 = Watch(
+        id=51,
+        region=IdValue(52),
+        city="yyy",
+        specialty=[IdValue(53), IdValue(56), IdValue(59)],
+        clinic=IdValue(54),
+        doctor=IdValue(55),
+        start_date=starting_point,
+        end_date=starting_point + timedelta(days=10),
+        time_range=WatchTimeRange("12:15:36"),
+        auto_book=True,
+        exclusions=parse_exclusions("doctor:123,456"),
+        type=WatchType.EXAMINATION,
+    )
     assert w3.is_active(threshold, starting_point) == WatchActiveStatus.ACTIVE
 
 
@@ -407,21 +403,20 @@ def test_watchtimerange_to_string():
 
 def test_watch_edit_preserves_other_fields():
     """Test that editing a Watch field preserves other field values."""
-    init = (
-        91,
-        92,
-        "zzz",
-        [93],
-        94,
-        95,
-        date.fromisoformat("2027-02-21"),
-        date.fromisoformat("2027-09-17"),
-        "10:30:00-12:00:00",
-        False,
-        None,
-        "Standard",
+    watch = Watch(
+        id=91,
+        region=IdValue(92),
+        city="zzz",
+        specialty=[IdValue(93)],
+        clinic=IdValue(94),
+        doctor=IdValue(95),
+        start_date=date.fromisoformat("2027-02-21"),
+        end_date=date.fromisoformat("2027-09-17"),
+        time_range=WatchTimeRange("10:30:00-12:00:00"),
+        auto_book=False,
+        exclusions=None,
+        type=WatchType.STANDARD,
     )
-    watch = Watch.from_tuple(init)
     # Simulate edit
     new_city = "edited"
     watch.city = new_city
