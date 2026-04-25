@@ -4,16 +4,18 @@ These tests focus on the new "account" column additions to watch and appointment
 and related behaviors in service/database layers.
 """
 
+import datetime
+
 import pytest
 from sqlalchemy import text
 
-from src.medicover.watch import Watch, WatchType
+from src.medicover.watch import Watch, WatchTimeRange, WatchType
 from src.medicover.appointment import Appointment
 from src.id_value_util import IdValue
 from src.medicover.services.watch_service import WatchService
 
 # Reuse SQLite-based testing logic by subclassing to avoid side-effects
-from tests.test_db import SqliteDbLogic, SqliteDbClient  # type: ignore
+from tests.test_db import SqliteDbClient  # type: ignore
 
 
 class DummyAPI:
@@ -23,7 +25,7 @@ class DummyAPI:
 
 @pytest.fixture
 def db_logic():
-    return SqliteDbLogic(":memory:")
+    return SqliteDbClient(":memory:")
 
 
 @pytest.fixture
@@ -38,21 +40,18 @@ def watch_service(db_client):
 
 def test_watch_persists_account_alias(db_client):
     # Create a watch with an explicit account alias
-    watch = Watch.from_tuple((
-        0,  # id (ignored on save)
-        101,  # region id
-        "CityX",  # city
-        [9],  # specialties
-        None,  # clinic
-        None,  # doctor
-        "2025-01-01",  # start
-        "2025-12-31",  # end
-        "00:00:00-*",  # time range
-        False,  # autobook
-        None,  # exclusions
-        WatchType.STANDARD.value,  # type
-        "accA",  # account alias
-    ))
+    watch = Watch(
+        id=0,
+        region=IdValue(101),
+        city="CityX",
+        specialty=[IdValue(9)],
+        start_date=datetime.date.fromisoformat("2025-01-01"),
+        end_date=datetime.date.fromisoformat("2025-12-31"),
+        time_range=WatchTimeRange("00:00:00-*"),
+        auto_book=False,
+        type=WatchType.STANDARD,
+        account="accA",
+    )
     new_id = db_client.save_watch(watch)
     # Fetch back via client (which normalizes)
     stored = db_client.get_watch(new_id)
@@ -62,20 +61,17 @@ def test_watch_persists_account_alias(db_client):
 
 def test_watch_service_default_account_on_update(db_client, watch_service):
     # Create watch without account alias
-    watch = Watch.from_tuple((
-        0,
-        102,
-        "CityY",
-        [10],
-        None,
-        None,
-        "2025-01-01",
-        "2025-12-31",
-        "00:00:00-*",
-        False,
-        None,
-        WatchType.STANDARD.value,
-    ))
+    watch = Watch(
+        id=0,
+        region=IdValue(102),
+        city="CityY",
+        specialty=[IdValue(10)],
+        start_date=datetime.date.fromisoformat("2025-01-01"),
+        end_date=datetime.date.fromisoformat("2025-12-31"),
+        time_range=WatchTimeRange("00:00:00-*"),
+        auto_book=False,
+        type=WatchType.STANDARD,
+    )
     watch_id = db_client.save_watch(watch)
     existing = db_client.get_watch(watch_id)
     assert existing is not None

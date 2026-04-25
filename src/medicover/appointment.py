@@ -55,30 +55,6 @@ class Appointment:
         ap.account = account
         return ap
 
-    @staticmethod
-    def initialize_from_tuple(data: tuple) -> "Appointment":
-        """Create an Appointment from a persisted tuple.
-
-        Supported formats (legacy compatibility):
-            (id, clinic, doctor, date_time, specialty, visit_type, booking_string, booking_identifier)
-            (id, clinic, doctor, date_time, specialty, visit_type, booking_string, booking_identifier, account)
-        """
-        if len(data) not in (8, 9):
-            raise ValueError("Cannot initialize Appointment object, the data tuple is in improper format")
-
-        ap = Appointment()
-        ap.clinic = IdValue(data[1])
-        ap.doctor = IdValue(data[2])
-        # Handle both string and datetime objects for date/time
-        dt_raw = data[3]
-        ap.date_time = datetime.datetime.fromisoformat(dt_raw) if isinstance(dt_raw, str) else dt_raw
-        ap.specialty = IdValue(data[4])
-        ap.visit_type = data[5]
-        ap.booking_string = data[6]
-        ap.booking_identifier = data[7]
-        ap.account = data[8]
-        return ap
-
     def __eq__(self, other) -> bool:
         return (
             self.clinic.id == other.clinic.id

@@ -151,8 +151,15 @@ def test_appointment_full_initializer_method():
 
 
 def test_appointment_tuple_init():
-    data = (0, 123, 456, "2020-11-11 09:30:00", 789, "xdd", "aaaa", 1337, None)
-    ap = Appointment.initialize_from_tuple(data)
+    ap = Appointment.initialize(
+        clinic=IdValue(123),
+        doctor=IdValue(456),
+        date_time="2020-11-11 09:30:00",
+        specialty=IdValue(789),
+        visit_type="xdd",
+        booking_string="aaaa",
+        booking_identifier=1337,
+    )
 
     assert ap.date_time == datetime.fromisoformat("2020-11-11 09:30:00")
     assert ap.clinic == IdValue(123)
@@ -164,14 +171,35 @@ def test_appointment_tuple_init():
 
 
 def test_appointment_compare():
-    data1 = (0, 123, 456, "2020-11-11 09:30:00", 789, "xdd", "aaaa", 1337, None)
-    ap1 = Appointment.initialize_from_tuple(data1)
+    ap1 = Appointment.initialize(
+        clinic=IdValue(123),
+        doctor=IdValue(456),
+        date_time="2020-11-11 09:30:00",
+        specialty=IdValue(789),
+        visit_type="xdd",
+        booking_string="aaaa",
+        booking_identifier=1337,
+    )
 
-    data2 = (0, 123, 456, "2020-11-11 09:30:00", 789, "xdd", "aaaa", 1337, None)
-    ap2 = Appointment.initialize_from_tuple(data2)
+    ap2 = Appointment.initialize(
+        clinic=IdValue(123),
+        doctor=IdValue(456),
+        date_time="2020-11-11 09:30:00",
+        specialty=IdValue(789),
+        visit_type="xdd",
+        booking_string="aaaa",
+        booking_identifier=1337,
+    )
 
-    data3 = (0, 444, 555, "1999-11-11 19:10:00", 111, "cccc", "bbbb", 12323, None)
-    ap3 = Appointment.initialize_from_tuple(data3)
+    ap3 = Appointment.initialize(
+        clinic=IdValue(444),
+        doctor=IdValue(555),
+        date_time="1999-11-11 19:10:00",
+        specialty=IdValue(111),
+        visit_type="cccc",
+        booking_string="bbbb",
+        booking_identifier=12323,
+    )
 
     assert ap1 == ap2
     assert ap1 != ap3
