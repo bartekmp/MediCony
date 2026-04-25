@@ -208,15 +208,17 @@ class MedicoverDbClient(BaseDbLogic):
         with self._lock:
             try:
                 with self.get_session() as session:
-                    session.add(MedicoverAppointmentModel(
-                        clinic=appointment.clinic.id,
-                        doctor=appointment.doctor.id,
-                        date=appointment.date_time,
-                        specialty=appointment.specialty.id,
-                        visitType=appointment.visit_type,
-                        bookingString=appointment.booking_string,
-                        account=appointment.account,
-                    ))
+                    session.add(
+                        MedicoverAppointmentModel(
+                            clinic=appointment.clinic.id,
+                            doctor=appointment.doctor.id,
+                            date=appointment.date_time,
+                            specialty=appointment.specialty.id,
+                            visitType=appointment.visit_type,
+                            bookingString=appointment.booking_string,
+                            account=appointment.account,
+                        )
+                    )
                     session.commit()
             except SQLAlchemyError as e:
                 log.error(f"Error adding appointment: {e}")
@@ -229,15 +231,17 @@ class MedicoverDbClient(BaseDbLogic):
             try:
                 with self.get_session() as session:
                     for appointment in appointments:
-                        session.add(MedicoverAppointmentModel(
-                            clinic=appointment.clinic.id,
-                            doctor=appointment.doctor.id,
-                            date=appointment.date_time,
-                            specialty=appointment.specialty.id,
-                            visitType=appointment.visit_type,
-                            bookingString=appointment.booking_string,
-                            account=appointment.account,
-                        ))
+                        session.add(
+                            MedicoverAppointmentModel(
+                                clinic=appointment.clinic.id,
+                                doctor=appointment.doctor.id,
+                                date=appointment.date_time,
+                                specialty=appointment.specialty.id,
+                                visitType=appointment.visit_type,
+                                bookingString=appointment.booking_string,
+                                account=appointment.account,
+                            )
+                        )
                     session.commit()
             except SQLAlchemyError as e:
                 log.error(f"Error adding multiple appointments: {e}")
@@ -344,9 +348,7 @@ class MedicoverDbClient(BaseDbLogic):
                 log.error(f"Error getting booked appointments: {e}")
                 return []
 
-    def save_appointments_and_filter_old(
-        self, appointments: List[MedicoverAppointment]
-    ) -> List[MedicoverAppointment]:
+    def save_appointments_and_filter_old(self, appointments: List[MedicoverAppointment]) -> List[MedicoverAppointment]:
         existing_keys = self.get_existing_appointment_keys(appointments)
         new_appointments = [a for a in appointments if (a.clinic.id, a.doctor.id, a.date_time) not in existing_keys]
         if new_appointments:
@@ -406,11 +408,13 @@ class MedicoverDbClient(BaseDbLogic):
                         existing.deviceId = device_id
                         existing.refreshToken = stored_refresh_token
                     else:
-                        session.add(MedicoverAccountSessionModel(
-                            account=account,
-                            deviceId=device_id,
-                            refreshToken=stored_refresh_token,
-                        ))
+                        session.add(
+                            MedicoverAccountSessionModel(
+                                account=account,
+                                deviceId=device_id,
+                                refreshToken=stored_refresh_token,
+                            )
+                        )
                     session.commit()
             except SQLAlchemyError as e:
                 log.error(f"Error saving account session: {e}")

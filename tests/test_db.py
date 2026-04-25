@@ -73,14 +73,26 @@ def test_clear_db(db: SqliteDbClient) -> None:
     future_date = now + datetime.timedelta(days=1)
 
     with db.get_session() as session:
-        session.add(MedicoverAppointmentModel(
-            clinic=1, doctor=11, date=past_date, specialty=23,
-            visitType="Center", bookingString="booking1",
-        ))
-        session.add(MedicoverAppointmentModel(
-            clinic=2, doctor=22, date=future_date, specialty=24,
-            visitType="Center", bookingString="booking2",
-        ))
+        session.add(
+            MedicoverAppointmentModel(
+                clinic=1,
+                doctor=11,
+                date=past_date,
+                specialty=23,
+                visitType="Center",
+                bookingString="booking1",
+            )
+        )
+        session.add(
+            MedicoverAppointmentModel(
+                clinic=2,
+                doctor=22,
+                date=future_date,
+                specialty=24,
+                visitType="Center",
+                bookingString="booking2",
+            )
+        )
         session.commit()
 
     db.clear_db()
@@ -95,18 +107,28 @@ def test_clear_db(db: SqliteDbClient) -> None:
     doctorId = 2
 
     with db.get_session() as session:
-        session.add(MedicoverAppointmentModel(
-            clinic=clinicId, doctor=doctorId,
-            date=datetime.datetime(2023, 10, 10, 10, 0, 0),
-            specialty=3, visitType="visitType1",
-            bookingString="bookingString1", bookingIdentifier=1,
-        ))
-        session.add(MedicoverAppointmentModel(
-            clinic=11, doctor=22,
-            date=datetime.datetime(2023, 10, 11, 10, 0, 0),
-            specialty=33, visitType="visitType2",
-            bookingString="bookingString2", bookingIdentifier=None,
-        ))
+        session.add(
+            MedicoverAppointmentModel(
+                clinic=clinicId,
+                doctor=doctorId,
+                date=datetime.datetime(2023, 10, 10, 10, 0, 0),
+                specialty=3,
+                visitType="visitType1",
+                bookingString="bookingString1",
+                bookingIdentifier=1,
+            )
+        )
+        session.add(
+            MedicoverAppointmentModel(
+                clinic=11,
+                doctor=22,
+                date=datetime.datetime(2023, 10, 11, 10, 0, 0),
+                specialty=33,
+                visitType="visitType2",
+                bookingString="bookingString2",
+                bookingIdentifier=None,
+            )
+        )
         session.commit()
 
     booked_appointments = db.get_booked_appointments()
@@ -145,18 +167,27 @@ def test_update_appointment(db):
     date_time = datetime.datetime.fromisoformat("2023-10-10 10:00:00")
 
     with db.get_session() as session:
-        session.add(MedicoverAppointmentModel(
-            clinic=clinic.id, doctor=doctor.id, date=date_time,
-            specialty=specialty.id, visitType="visitType1",
-            bookingString="bookingString1", bookingIdentifier=0,
-        ))
+        session.add(
+            MedicoverAppointmentModel(
+                clinic=clinic.id,
+                doctor=doctor.id,
+                date=date_time,
+                specialty=specialty.id,
+                visitType="visitType1",
+                bookingString="bookingString1",
+                bookingIdentifier=0,
+            )
+        )
         session.commit()
 
     appointment = Appointment.initialize(
-        clinic=clinic, doctor=doctor,
+        clinic=clinic,
+        doctor=doctor,
         date_time="2023-10-10 10:00:00",
-        specialty=specialty, visit_type="visitType1",
-        booking_string="bookingString1", booking_identifier=1234567,
+        specialty=specialty,
+        visit_type="visitType1",
+        booking_string="bookingString1",
+        booking_identifier=1234567,
     )
 
     db.update_appointment(appointment)
@@ -169,12 +200,17 @@ def test_update_appointment(db):
 
 def test_remove_appointment(db):
     with db.get_session() as session:
-        session.add(MedicoverAppointmentModel(
-            clinic=111, doctor=222,
-            date=datetime.datetime(2023, 10, 10, 10, 0, 0),
-            specialty=333, visitType="visitType1",
-            bookingString="bookingString1", bookingIdentifier=1,
-        ))
+        session.add(
+            MedicoverAppointmentModel(
+                clinic=111,
+                doctor=222,
+                date=datetime.datetime(2023, 10, 10, 10, 0, 0),
+                specialty=333,
+                visitType="visitType1",
+                bookingString="bookingString1",
+                bookingIdentifier=1,
+            )
+        )
         session.commit()
 
     with db.get_session() as session:
@@ -215,10 +251,17 @@ def test_save_watch_with_not_all_fields(db):
 def test_remove_watch(db):
     with db.get_session() as session:
         watch_model = MedicoverWatchModel(
-            region=1, city="abc", specialty="2", doctor=3, clinic=4,
-            startDate=datetime.date(2023, 10, 10), endDate=datetime.date(2023, 10, 11),
-            timeRange="09:00:00-17:00:00", autobook=True,
-            exclusions="doctor:123;clinic:456", type="Standard",
+            region=1,
+            city="abc",
+            specialty="2",
+            doctor=3,
+            clinic=4,
+            startDate=datetime.date(2023, 10, 10),
+            endDate=datetime.date(2023, 10, 11),
+            timeRange="09:00:00-17:00:00",
+            autobook=True,
+            exclusions="doctor:123;clinic:456",
+            type="Standard",
         )
         session.add(watch_model)
         session.commit()
@@ -233,18 +276,36 @@ def test_remove_watch(db):
 
 def test_get_watches(db):
     with db.get_session() as session:
-        session.add(MedicoverWatchModel(
-            region=1, city="ppp", specialty="2", doctor=3, clinic=4,
-            startDate=datetime.date(2023, 10, 10), endDate=datetime.date(2023, 10, 11),
-            timeRange="09:00-17:00", autobook=True,
-            exclusions="doctor:123;clinic:456", type="Standard",
-        ))
-        session.add(MedicoverWatchModel(
-            region=11, city="ooo", specialty="22", doctor=33, clinic=44,
-            startDate=datetime.date(2023, 10, 12), endDate=datetime.date(2023, 10, 13),
-            timeRange="10:00-18:00", autobook=True,
-            exclusions=None, type="DiagnosticProcedure",
-        ))
+        session.add(
+            MedicoverWatchModel(
+                region=1,
+                city="ppp",
+                specialty="2",
+                doctor=3,
+                clinic=4,
+                startDate=datetime.date(2023, 10, 10),
+                endDate=datetime.date(2023, 10, 11),
+                timeRange="09:00-17:00",
+                autobook=True,
+                exclusions="doctor:123;clinic:456",
+                type="Standard",
+            )
+        )
+        session.add(
+            MedicoverWatchModel(
+                region=11,
+                city="ooo",
+                specialty="22",
+                doctor=33,
+                clinic=44,
+                startDate=datetime.date(2023, 10, 12),
+                endDate=datetime.date(2023, 10, 13),
+                timeRange="10:00-18:00",
+                autobook=True,
+                exclusions=None,
+                type="DiagnosticProcedure",
+            )
+        )
         session.commit()
 
     watches = db.get_watches()
@@ -259,18 +320,36 @@ def test_get_watches(db):
 
 def test_dbclient_get_watches(db_client):
     with db_client.get_session() as session:
-        session.add(MedicoverWatchModel(
-            region=1, city="ttt", specialty="2", doctor=3, clinic=4,
-            startDate=datetime.date(2023, 10, 10), endDate=datetime.date(2023, 10, 11),
-            timeRange="09:00-17:00", autobook=True,
-            exclusions="doctor:123,999;clinic:456", type="Standard",
-        ))
-        session.add(MedicoverWatchModel(
-            region=11, city="k", specialty="22", doctor=33, clinic=44,
-            startDate=datetime.date(2023, 10, 12), endDate=datetime.date(2023, 10, 13),
-            timeRange="10:00-18:00", autobook=True,
-            exclusions="clinic:888", type="DiagnosticProcedure",
-        ))
+        session.add(
+            MedicoverWatchModel(
+                region=1,
+                city="ttt",
+                specialty="2",
+                doctor=3,
+                clinic=4,
+                startDate=datetime.date(2023, 10, 10),
+                endDate=datetime.date(2023, 10, 11),
+                timeRange="09:00-17:00",
+                autobook=True,
+                exclusions="doctor:123,999;clinic:456",
+                type="Standard",
+            )
+        )
+        session.add(
+            MedicoverWatchModel(
+                region=11,
+                city="k",
+                specialty="22",
+                doctor=33,
+                clinic=44,
+                startDate=datetime.date(2023, 10, 12),
+                endDate=datetime.date(2023, 10, 13),
+                timeRange="10:00-18:00",
+                autobook=True,
+                exclusions="clinic:888",
+                type="DiagnosticProcedure",
+            )
+        )
         session.commit()
 
     watches = db_client.get_watches()
@@ -290,10 +369,17 @@ def test_dbclient_get_watches(db_client):
 def test_dbclient_remove_watch(db_client):
     with db_client.get_session() as session:
         watch_model = MedicoverWatchModel(
-            region=1, city="Berlin", specialty="2", doctor=3, clinic=4,
-            startDate=datetime.date(2023, 10, 10), endDate=datetime.date(2023, 10, 11),
-            timeRange="09:00-17:00", autobook=True,
-            exclusions=None, type="Standard",
+            region=1,
+            city="Berlin",
+            specialty="2",
+            doctor=3,
+            clinic=4,
+            startDate=datetime.date(2023, 10, 10),
+            endDate=datetime.date(2023, 10, 11),
+            timeRange="09:00-17:00",
+            autobook=True,
+            exclusions=None,
+            type="Standard",
         )
         session.add(watch_model)
         session.commit()
@@ -373,18 +459,27 @@ def test_dbclient_update_appointment(db_client):
     date_time = datetime.datetime.fromisoformat("2023-10-10 10:00:00")
 
     with db_client.get_session() as session:
-        session.add(MedicoverAppointmentModel(
-            clinic=clinic.id, doctor=doctor.id, date=date_time,
-            specialty=specialty.id, visitType="visitType1",
-            bookingString="bookingString1", bookingIdentifier=None,
-        ))
+        session.add(
+            MedicoverAppointmentModel(
+                clinic=clinic.id,
+                doctor=doctor.id,
+                date=date_time,
+                specialty=specialty.id,
+                visitType="visitType1",
+                bookingString="bookingString1",
+                bookingIdentifier=None,
+            )
+        )
         session.commit()
 
     appointment = Appointment.initialize(
-        clinic=clinic, doctor=doctor,
+        clinic=clinic,
+        doctor=doctor,
         date_time="2023-10-10 10:00:00",
-        specialty=specialty, visit_type="visitType1",
-        booking_string="bookingString1", booking_identifier=1994567,
+        specialty=specialty,
+        visit_type="visitType1",
+        booking_string="bookingString1",
+        booking_identifier=1994567,
     )
 
     db_client.update_appointment(appointment)
@@ -401,14 +496,22 @@ def test_dbclient_save_appointments_and_filter_old(db_client):
     specialty = IdValue(23, "specialty1")
 
     appointment1 = Appointment.initialize(
-        clinic=clinic, doctor=doctor, date_time="2023-10-10 10:00:00",
-        specialty=specialty, visit_type="visitType1",
-        booking_string="bookingString1", booking_identifier=1234567,
+        clinic=clinic,
+        doctor=doctor,
+        date_time="2023-10-10 10:00:00",
+        specialty=specialty,
+        visit_type="visitType1",
+        booking_string="bookingString1",
+        booking_identifier=1234567,
     )
     appointment2 = Appointment.initialize(
-        clinic=clinic, doctor=doctor, date_time="2023-10-11 10:00:00",
-        specialty=specialty, visit_type="visitType2",
-        booking_string="bookingString2", booking_identifier=1234568,
+        clinic=clinic,
+        doctor=doctor,
+        date_time="2023-10-11 10:00:00",
+        specialty=specialty,
+        visit_type="visitType2",
+        booking_string="bookingString2",
+        booking_identifier=1234568,
     )
 
     new_appointments = db_client.save_appointments_and_filter_old([appointment1, appointment2])
@@ -431,12 +534,20 @@ def test_dbclient_save_appointments_filters_existing(db_client):
     specialty = IdValue(30, "s")
 
     existing = Appointment.initialize(
-        clinic=clinic, doctor=doctor, date_time="2024-01-01 09:00:00",
-        specialty=specialty, visit_type="v", booking_string="b",
+        clinic=clinic,
+        doctor=doctor,
+        date_time="2024-01-01 09:00:00",
+        specialty=specialty,
+        visit_type="v",
+        booking_string="b",
     )
     new_ap = Appointment.initialize(
-        clinic=clinic, doctor=doctor, date_time="2024-01-02 09:00:00",
-        specialty=specialty, visit_type="v", booking_string="b",
+        clinic=clinic,
+        doctor=doctor,
+        date_time="2024-01-02 09:00:00",
+        specialty=specialty,
+        visit_type="v",
+        booking_string="b",
     )
 
     db_client.add_appointment_history(existing)
@@ -458,8 +569,12 @@ def test_dbclient_save_appointments_all_existing(db_client):
     specialty = IdValue(31, "s")
 
     ap = Appointment.initialize(
-        clinic=clinic, doctor=doctor, date_time="2024-03-01 08:00:00",
-        specialty=specialty, visit_type="v", booking_string="b",
+        clinic=clinic,
+        doctor=doctor,
+        date_time="2024-03-01 08:00:00",
+        specialty=specialty,
+        visit_type="v",
+        booking_string="b",
     )
     db_client.add_appointment_history(ap)
 
@@ -485,16 +600,28 @@ def test_get_existing_appointment_keys_bulk(db_client):
     specialty = IdValue(70, "s")
 
     ap1 = Appointment.initialize(
-        clinic=clinic, doctor=doctor, date_time="2024-06-01 10:00:00",
-        specialty=specialty, visit_type="v", booking_string="b",
+        clinic=clinic,
+        doctor=doctor,
+        date_time="2024-06-01 10:00:00",
+        specialty=specialty,
+        visit_type="v",
+        booking_string="b",
     )
     ap2 = Appointment.initialize(
-        clinic=clinic, doctor=doctor, date_time="2024-06-02 10:00:00",
-        specialty=specialty, visit_type="v", booking_string="b",
+        clinic=clinic,
+        doctor=doctor,
+        date_time="2024-06-02 10:00:00",
+        specialty=specialty,
+        visit_type="v",
+        booking_string="b",
     )
     ap3 = Appointment.initialize(
-        clinic=clinic, doctor=doctor, date_time="2024-06-03 10:00:00",
-        specialty=specialty, visit_type="v", booking_string="b",
+        clinic=clinic,
+        doctor=doctor,
+        date_time="2024-06-03 10:00:00",
+        specialty=specialty,
+        visit_type="v",
+        booking_string="b",
     )
     db_client.add_appointment_history(ap1)
     db_client.add_appointment_history(ap3)
@@ -509,21 +636,39 @@ def test_get_existing_appointment_keys_bulk(db_client):
 
 def test_dbclient_list_booked_appointments(db_client):
     with db_client.get_session() as session:
-        session.add(MedicoverAppointmentModel(
-            clinic=234, doctor=345, date=datetime.datetime(2025, 4, 10, 10, 0, 0),
-            specialty=456, visitType="visitType1",
-            bookingString="bookingString1", bookingIdentifier=123123123,
-        ))
-        session.add(MedicoverAppointmentModel(
-            clinic=4, doctor=3, date=datetime.datetime(2025, 4, 10, 10, 0, 0),
-            specialty=2, visitType="visitType1",
-            bookingString="bookingString2", bookingIdentifier=1,
-        ))
-        session.add(MedicoverAppointmentModel(
-            clinic=111, doctor=222, date=datetime.datetime(2025, 4, 10, 10, 0, 0),
-            specialty=333, visitType="visitType1",
-            bookingString="bookingString3", bookingIdentifier=None,
-        ))
+        session.add(
+            MedicoverAppointmentModel(
+                clinic=234,
+                doctor=345,
+                date=datetime.datetime(2025, 4, 10, 10, 0, 0),
+                specialty=456,
+                visitType="visitType1",
+                bookingString="bookingString1",
+                bookingIdentifier=123123123,
+            )
+        )
+        session.add(
+            MedicoverAppointmentModel(
+                clinic=4,
+                doctor=3,
+                date=datetime.datetime(2025, 4, 10, 10, 0, 0),
+                specialty=2,
+                visitType="visitType1",
+                bookingString="bookingString2",
+                bookingIdentifier=1,
+            )
+        )
+        session.add(
+            MedicoverAppointmentModel(
+                clinic=111,
+                doctor=222,
+                date=datetime.datetime(2025, 4, 10, 10, 0, 0),
+                specialty=333,
+                visitType="visitType1",
+                bookingString="bookingString3",
+                bookingIdentifier=None,
+            )
+        )
         session.commit()
 
     booked_aps = db_client.get_booked_appointments()
