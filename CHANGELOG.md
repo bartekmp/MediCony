@@ -2,6 +2,24 @@
 
 <!-- version list -->
 
+## v2.4.6 (2026-04-25)
+
+### Bug Fixes
+
+- Replace naive flag polling 300 times per minute with a single wake event
+  ([#91](https://github.com/bartekmp/MediCony/pull/91),
+  [`91c77c3`](https://github.com/bartekmp/MediCony/commit/91c77c3c4bede97a1889e1228bb0cf1e75fa92a4))
+
+### Improvement
+
+- Format sources ([#91](https://github.com/bartekmp/MediCony/pull/91),
+  [`91c77c3`](https://github.com/bartekmp/MediCony/commit/91c77c3c4bede97a1889e1228bb0cf1e75fa92a4))
+
+- Merge MedicoverDbLogic+Client into single class, eliminate tuple pipeline
+  ([#91](https://github.com/bartekmp/MediCony/pull/91),
+  [`91c77c3`](https://github.com/bartekmp/MediCony/commit/91c77c3c4bede97a1889e1228bb0cf1e75fa92a4))
+
+
 ## v2.4.5 (2026-04-18)
 
 ### Bug Fixes
