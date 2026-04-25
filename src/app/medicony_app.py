@@ -117,29 +117,32 @@ class MediCony:
 
             log.info(f"=== Sleeping for {sleep_period_s}s")
 
-            # Sleep in smaller intervals to check shutdown event periodically
-            sleep_interval = 1  # Check every second
-            total_slept = 0
+            sleep_task = asyncio.create_task(asyncio.sleep(sleep_period_s))
+            shutdown_task = asyncio.create_task(shutdown_event.wait())
+            wake_task = asyncio.create_task(wake_event.wait()) if wake_event else None
+            wait_tasks = {sleep_task, shutdown_task}
+            if wake_task is not None:
+                wait_tasks.add(wake_task)
 
-            while total_slept < sleep_period_s and not shutdown_event.is_set():
-                try:
-                    # If a wake_event is provided and set, break sleep early
-                    if wake_event is not None and wake_event.is_set():
-                        log.info("Wake event received. Skipping remaining sleep and running next cycle now.")
-                        wake_event.clear()
-                        break
+            try:
+                done, _ = await asyncio.wait(wait_tasks, return_when=asyncio.FIRST_COMPLETED)
+            except asyncio.CancelledError:
+                log.info("Sleep cancelled, shutting down")
+                for t in wait_tasks:
+                    t.cancel()
+                break
+            finally:
+                for t in wait_tasks:
+                    if not t.done():
+                        t.cancel()
 
-                    remaining_sleep = min(sleep_interval, sleep_period_s - total_slept)
-                    await asyncio.sleep(remaining_sleep)
-                    total_slept += remaining_sleep
-                except asyncio.CancelledError:
-                    log.info("Sleep cancelled, shutting down")
-                    break
-
-            # Double-check shutdown event after sleep
-            if shutdown_event.is_set():
+            if shutdown_task in done:
                 log.info("Shutdown requested during sleep, exiting daemon mode")
                 break
+
+            if wake_task and wake_task in done:
+                log.info("Wake event received. Skipping remaining sleep and running next cycle now.")
+                wake_event.clear()
 
         log.info("Daemon mode stopped")
 
