@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v2.4.7 (2026-05-02)
+
+### Bug Fixes
+
+- **deps**: Update dependency psycopg2-binary to v2.9.12
+  ([#94](https://github.com/bartekmp/MediCony/pull/94),
+  [`f40d609`](https://github.com/bartekmp/MediCony/commit/f40d609838e5cc3cc790ec6610720d3bd73a67a6))
+
+
 ## v2.4.6 (2026-04-25)
 
 ### Bug Fixes
