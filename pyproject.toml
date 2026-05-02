@@ -19,7 +19,7 @@ dependencies = [
     "apscheduler==3.11.2",
     "cryptography==46.0.7",
     "sqlalchemy==2.0.49",
-    "psycopg2-binary==2.9.11",
+    "psycopg2-binary==2.9.12",
 ]
 optional-dependencies = { dev = [
     "ruff>=0.9.0",
