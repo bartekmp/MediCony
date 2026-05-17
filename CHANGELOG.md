@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v2.4.12 (2026-05-17)
+
+### Update
+
+- Update dependency cryptography to v48 ([#96](https://github.com/bartekmp/MediCony/pull/96),
+  [`b7ca812`](https://github.com/bartekmp/MediCony/commit/b7ca8121b1c350334a0393d9047e9abfe27d17ca))
+
+
 ## v2.4.11 (2026-05-17)
 
 ### Bug Fixes
