@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v2.4.11 (2026-05-17)
+
+### Bug Fixes
+
+- **deps**: Update dependency aiogram to v3.28.2
+  ([#99](https://github.com/bartekmp/MediCony/pull/99),
+  [`be94ce3`](https://github.com/bartekmp/MediCony/commit/be94ce3f6f91ec1474ae3d70a8e3861ff40f0f3a))
+
+
 ## v2.4.10 (2026-05-17)
 
 ### Bug Fixes
