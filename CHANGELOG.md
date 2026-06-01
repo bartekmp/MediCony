@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v2.4.15 (2026-06-01)
+
+### Bug Fixes
+
+- **deps**: Update dependency sqlalchemy to v2.0.50
+  ([#104](https://github.com/bartekmp/MediCony/pull/104),
+  [`f538dba`](https://github.com/bartekmp/MediCony/commit/f538dbac12b99329bcd22f8d09bcb444b60927b5))
+
+
 ## v2.4.14 (2026-05-30)
 
 ### Bug Fixes
