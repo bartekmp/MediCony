@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v2.4.20 (2026-06-21)
+
+### Bug Fixes
+
+- **deps**: Update python dependencies to v3.29.0
+  ([#112](https://github.com/bartekmp/MediCony/pull/112),
+  [`4c054d9`](https://github.com/bartekmp/MediCony/commit/4c054d95ab89df8632f2e42676627c97da9067e3))
+
+
 ## v2.4.19 (2026-06-21)
 
 ### Bug Fixes
