@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v2.4.25 (2026-06-27)
+
+### Bug Fixes
+
+- Use python3 instead of python3.13
+  ([`d0294c4`](https://github.com/bartekmp/MediCony/commit/d0294c4b24f701f86a2f34f3b7638d1e413b4c60))
+
+
 ## v2.4.24 (2026-06-27)
 
 ### Bug Fixes
