@@ -132,12 +132,10 @@ EOF
     post {
         always {
             echo 'Cleaning up daily test environment...'
-            node {
-                sh "rm -rf log db"
-                sh "rm -rf ${env.VENV_DIR}"
-                sh "rm -f daily-test-results.xml"
-                sh "rm -f .env"
-            }
+            sh "rm -rf log db"
+            sh "rm -rf ${env.VENV_DIR}"
+            sh "rm -f daily-test-results.xml"
+            sh "rm -f .env"
         }
         
         success {
