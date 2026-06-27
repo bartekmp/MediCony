@@ -132,11 +132,12 @@ EOF
     post {
         always {
             echo 'Cleaning up daily test environment...'
-
-            sh "rm -rf log db"
-            sh "rm -rf ${env.VENV_DIR}"
-            sh "rm -f daily-test-results.xml"
-            sh "rm -f .env"
+            node {
+                sh "rm -rf log db"
+                sh "rm -rf ${env.VENV_DIR}"
+                sh "rm -f daily-test-results.xml"
+                sh "rm -f .env"
+            }
         }
         
         success {
@@ -165,7 +166,7 @@ EOF
                     
                     View results: ${env.BUILD_URL}
                     """,
-                    to: "${env.CHANGE_AUTHOR_EMAIL ?: 'your-email@domain.com'}"
+                    to: "${env.CHANGE_AUTHOR_EMAIL ?: 'bartoslaff@gmail.com'}"
                 )
             }
         }
@@ -196,7 +197,7 @@ EOF
                     
                     Please check the logs: ${env.BUILD_URL}console
                     """,
-                    to: "${env.CHANGE_AUTHOR_EMAIL ?: 'your-email@domain.com'}"
+                    to: "${env.CHANGE_AUTHOR_EMAIL ?: 'bartoslaff@gmail.com'}"
                 )
             }
         }
