@@ -64,11 +64,11 @@ EOF
                     """
                     
                     echo "Creating virtual environment for daily tests..."
-                    sh "python3.13 -m venv ${env.VENV_DIR}"
+                    sh "python3 -m venv ${env.VENV_DIR}"
                     
                     sh """
                         . ${env.VENV_DIR}/bin/activate
-                        python3.13 -m pip install -e .[dev]
+                        python3 -m pip install -e .[dev]
                     """
                 }
             }
