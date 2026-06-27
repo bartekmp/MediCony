@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v2.4.22 (2026-06-27)
+
+### Bug Fixes
+
+- Jenkinsfile.daily for multinode configuration
+  ([`47caf18`](https://github.com/bartekmp/MediCony/commit/47caf18dc105898aa7dddd503107c14ab56f43ee))
+
+
 ## v2.4.21 (2026-06-27)
 
 ### Bug Fixes
