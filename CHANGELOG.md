@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v2.4.24 (2026-06-27)
+
+### Bug Fixes
+
+- Remove invalid node{} in post block
+  ([`2faea7a`](https://github.com/bartekmp/MediCony/commit/2faea7a66c41225bcbee2d1b71fa56e267699102))
+
+
 ## v2.4.23 (2026-06-27)
 
 ### Update
