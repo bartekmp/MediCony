@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v2.4.26 (2026-06-29)
+
+### Update
+
+- Update actions/checkout action to v7 ([#114](https://github.com/bartekmp/MediCony/pull/114),
+  [`1cd4478`](https://github.com/bartekmp/MediCony/commit/1cd44781c62a18cf8786c10b50a682ffe4f5ab1b))
+
+
 ## v2.4.25 (2026-06-27)
 
 ### Bug Fixes
