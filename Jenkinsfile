@@ -134,7 +134,9 @@ pipeline {
             }
             steps {
                 script {
-                    sh 'git fetch --prune --tags origin'
+                    sshagent(['github_ssh_key']) {
+                        sh 'git fetch --prune --tags origin'
+                    }
 
                     env.SEMVER = sh(
                         script: "git describe --tags --abbrev=0 | sed 's/^v//'",
@@ -185,16 +187,18 @@ pipeline {
                         echo 'Skipping deployment because GITOPS_REPO is not set.'
                     } else if (env.TRIGGER_GITOPS_CD == 'true') {
                         // Clone the GitOps repo, update image, commit, and push to trigger deployment
-                        sh 'rm -rf gitops-tmp'
-                        sh "git clone ${env.GITOPS_REPO} gitops-tmp"
-                        dir('gitops-tmp/k8s/overlays/medicony') {
-                            sh "kustomize edit set image ${env.GHCR_IMAGE}=${env.GHCR_IMAGE}:${env.SEMVER}"
-                            sh 'git config user.email "ci@medicony.lel"'
-                            sh 'git config user.name "CI Bot"'
-                            sh "git commit -am \"Update image to ${env.SEMVER}\" || echo \"No changes to commit\""
-                            sh 'git push'
+                        sshagent(['github_ssh_key']) {
+                            sh 'rm -rf gitops-tmp'
+                            sh "git clone ${env.GITOPS_REPO} gitops-tmp"
+                            dir('gitops-tmp/k8s/overlays/medicony') {
+                                sh "kustomize edit set image ${env.GHCR_IMAGE}=${env.GHCR_IMAGE}:${env.SEMVER}"
+                                sh 'git config user.email "ci@medicony.lel"'
+                                sh 'git config user.name "CI Bot"'
+                                sh "git commit -am \"Update image to ${env.SEMVER}\" || echo \"No changes to commit\""
+                                sh 'git push'
+                            }
+                            sh 'rm -rf gitops-tmp'
                         }
-                        sh 'rm -rf gitops-tmp'
                     } else {
                         echo 'Skipping deployment as per user request.'
                     }
