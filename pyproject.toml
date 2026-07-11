@@ -14,9 +14,9 @@ dependencies = [
     "pytz==2026.2",
     "tenacity==9.1.4",
     "numpy==2.5.0",
-    "aiogram==3.29.0",
+    "aiogram==3.29.1",
     "lxml>=5.0.0",
-    "apscheduler==3.11.2",
+    "apscheduler==3.11.3",
     "cryptography==49.0.0",
     "sqlalchemy==2.0.51",
     "psycopg2-binary==2.9.12",
@@ -29,7 +29,7 @@ optional-dependencies = { dev = [
     "pytest-asyncio==1.4.0",
     "pytest-mock==3.15.1",
     "pytest-env==1.6.0",
-    "python-semantic-release==10.5.3",
+    "python-semantic-release==10.6.0",
     "setuptools_scm==10.2.0",
 ] }
 
