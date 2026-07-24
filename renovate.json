@@ -2,7 +2,6 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "config:recommended",
-    "group:allNonMajor",
     ":automergePr",
     ":automergeMinor",
     ":combinePatchMinorReleases",
@@ -14,12 +13,14 @@
     "dependencies"
   ],
   "timezone": "Europe/Warsaw",
-  "minimumReleaseAge": "7 days",
+  "minimumReleaseAge": "5 days",
   "rangeStrategy": "replace",
   "prConcurrentLimit": 5,
   "prCreation": "immediate",
   "rebaseWhen": "behind-base-branch",
   "stopUpdatingLabel": "renovate-stop",
+  "semanticCommits": "enabled",
+  "semanticCommitType": "update",
   "enabledManagers": [
     "poetry",
     "dockerfile",
@@ -48,7 +49,10 @@
       ],
       "enabled": true,
       "pinDigests": true,
-      "commitMessagePrefix": "ci:"
+      "groupName": "GitHub Actions",
+      "labels": [
+        "github-actions"
+      ]
     },
     {
       "matchManagers": [
@@ -99,8 +103,7 @@
       ],
       "prPriority": 10,
       "automerge": false,
-      "groupName": null,
-      "commitMessagePrefix": "update:"
+      "groupName": null
     }
   ]
 }
