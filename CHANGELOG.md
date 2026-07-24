@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v2.4.30 (2026-07-24)
+
+### Bug Fixes
+
+- Renovate PR grouping ([#123](https://github.com/bartekmp/MediCony/pull/123),
+  [`eeb6e91`](https://github.com/bartekmp/MediCony/commit/eeb6e91c2902f0e36ec4fe71580be9f2a04b6c6f))
+
+
 ## v2.4.29 (2026-07-12)
 
 ### Bug Fixes
