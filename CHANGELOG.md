@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v2.4.33 (2026-08-01)
+
+### Bug Fixes
+
+- **deps**: Update dependency pytz to v2026.3.post1
+  ([#126](https://github.com/bartekmp/MediCony/pull/126),
+  [`3bce7e8`](https://github.com/bartekmp/MediCony/commit/3bce7e862cd1c1d31377c2d686147fc628cd8c08))
+
+
 ## v2.4.32 (2026-07-26)
 
 ### Bug Fixes
