@@ -16,6 +16,7 @@ from src.bot.commands.watch_add import register_add_watch_handler
 from src.bot.commands.watch_edit import register_edit_watch_handler
 from src.bot.commands.watch_list import register_watches_handler
 from src.bot.commands.watch_remove import register_remove_watch_handler
+from src.bot.middlewares.access_control import AccessControlMiddleware
 from src.bot.telegram import check_env_vars
 from src.medicover.services.watch_service import WatchService
 
@@ -35,6 +36,7 @@ class TelegramBot:
             token=os.getenv("MEDICONY_TELEGRAM_TOKEN", ""),
         )
         self.dp = Dispatcher()
+        self.dp.update.outer_middleware(AccessControlMiddleware())
         self.watch_service = watch_service
         self.medicine_service = medicine_service
         self.wake_event = wake_event

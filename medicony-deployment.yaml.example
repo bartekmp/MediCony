@@ -64,6 +64,11 @@ spec:
           value: ""  # Your Telegram chat ID
         - name: MEDICONY_TELEGRAM_TOKEN
           value: ""  # Your Telegram bot token
+        # Optional but recommended: only these Telegram IDs may command the bot.
+        # Comma-separated user IDs and/or group chat IDs (negative); if unset/empty
+        # the bot responds to anyone.
+        - name: MEDICONY_TELEGRAM_ALLOWED_USER_IDS
+          value: "123456789,987654321,-1001234567890"
         # Optional: Application settings
         - name: SLEEP_PERIOD_SEC
           value: "300"  # Check interval in seconds
