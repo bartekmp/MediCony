@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v2.5.0 (2026-08-13)
+
+### Features
+
+- Restrict Telegram bot to an allow-list of user/chat IDs
+  ([#130](https://github.com/bartekmp/MediCony/pull/130),
+  [`3637a82`](https://github.com/bartekmp/MediCony/commit/3637a827403e45cdc71ee68fccfc353a559bdfab))
+
+
 ## v2.4.34 (2026-08-09)
 
 ### Bug Fixes
