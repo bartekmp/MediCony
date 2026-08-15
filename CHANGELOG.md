@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v2.5.1 (2026-08-15)
+
+### Bug Fixes
+
+- **deps**: Update dependency numpy to v2.5.2
+  ([#131](https://github.com/bartekmp/MediCony/pull/131),
+  [`c30c5fe`](https://github.com/bartekmp/MediCony/commit/c30c5fe13c473cd3faade4c37510cd5af4f24bb1))
+
+
 ## v2.5.0 (2026-08-13)
 
 ### Features
