@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v2.5.3 (2026-08-22)
+
+### Bug Fixes
+
+- **deps**: Update dependency python-dotenv to v1.2.3
+  ([#133](https://github.com/bartekmp/MediCony/pull/133),
+  [`461172c`](https://github.com/bartekmp/MediCony/commit/461172cfff3602addf428dcdb2eeaca8759e08fc))
+
+
 ## v2.5.2 (2026-08-17)
 
 ### Bug Fixes
