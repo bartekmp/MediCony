@@ -29,7 +29,7 @@ optional-dependencies = { dev = [
     "pytest-asyncio==1.4.0",
     "pytest-mock==3.15.1",
     "pytest-env==1.7.0",
-    "python-semantic-release==10.6.1",
+    "python-semantic-release==10.6.2",
     "setuptools_scm==10.2.1",
 ] }
 
