@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v2.5.8 (2026-09-13)
+
+### Bug Fixes
+
+- **deps**: Update dependency pytest-env to v1.7.1
+  ([#140](https://github.com/bartekmp/MediCony/pull/140),
+  [`ead202b`](https://github.com/bartekmp/MediCony/commit/ead202b59b1cb2cc277ea1e2187f130c784d0340))
+
+
 ## v2.5.7 (2026-09-12)
 
 ### Bug Fixes
