@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v2.5.12 (2026-09-27)
+
+### Bug Fixes
+
+- **deps**: Update dependency python-semantic-release to v10.7.0
+  ([#144](https://github.com/bartekmp/MediCony/pull/144),
+  [`3e387f5`](https://github.com/bartekmp/MediCony/commit/3e387f5a161c833ec3b93949a6641b910b67ada5))
+
+
 ## v2.5.11 (2026-09-21)
 
 ### Bug Fixes
