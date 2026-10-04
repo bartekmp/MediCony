@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v2.5.14 (2026-10-04)
+
+### Bug Fixes
+
+- **deps**: Update dependency isort to v9.0.2
+  ([#146](https://github.com/bartekmp/MediCony/pull/146),
+  [`6ae5504`](https://github.com/bartekmp/MediCony/commit/6ae550474ba9292b3a64bb44e14d21eca9c6d67f))
+
+
 ## v2.5.13 (2026-10-03)
 
 ### Bug Fixes
