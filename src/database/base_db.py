@@ -26,7 +26,8 @@ class BaseDbLogic:
         }
 
         # Create database URL with proper URL encoding for password
-        database_url = f"postgresql://{self._conn_params['user']}:{quote_plus(self._conn_params['password'])}@{self._conn_params['host']}:{self._conn_params['port']}/{self._conn_params['database']}"
+        # Pin the driver: SQLAlchemy 2.1 defaults bare "postgresql://" to psycopg (v3); we ship psycopg2-binary.
+        database_url = f"postgresql+psycopg2://{self._conn_params['user']}:{quote_plus(self._conn_params['password'])}@{self._conn_params['host']}:{self._conn_params['port']}/{self._conn_params['database']}"
 
         try:
             # Create engine
