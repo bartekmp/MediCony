@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v2.5.15 (2026-10-05)
+
+### Bug Fixes
+
+- Pin psycopg2 driver in PostgreSQL URL ([#147](https://github.com/bartekmp/MediCony/pull/147),
+  [`cf36a9d`](https://github.com/bartekmp/MediCony/commit/cf36a9d548b6e96259c1f6259be6c103165358ff))
+
+
 ## v2.5.14 (2026-10-04)
 
 ### Bug Fixes
