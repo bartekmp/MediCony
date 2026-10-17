@@ -12,13 +12,13 @@ dependencies = [
     "python-dotenv==1.2.4",
     "fake-useragent==2.2.0",
     "pytz==2026.5",
-    "tenacity==9.1.4",
-    "numpy==2.5.3",
+    "tenacity==9.2.1",
+    "numpy==2.5.4",
     "aiogram==3.31.0",
     "lxml>=5.0.0",
     "apscheduler==3.11.3",
     "cryptography==50.0.2",
-    "sqlalchemy==2.1.3",
+    "sqlalchemy==2.1.4",
     "psycopg2-binary==2.9.13",
 ]
 optional-dependencies = { dev = [
@@ -28,7 +28,7 @@ optional-dependencies = { dev = [
     "pytest==9.1.1",
     "pytest-asyncio==1.4.0",
     "pytest-mock==3.16.0",
-    "pytest-env==1.7.1",
+    "pytest-env==1.8.0",
     "python-semantic-release==10.7.0",
     "setuptools_scm==10.3.4",
 ] }
