@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v2.5.17 (2026-10-18)
+
+### Bug Fixes
+
+- **deps**: Update dependency notifiers to v2
+  ([#149](https://github.com/bartekmp/MediCony/pull/149),
+  [`20accdf`](https://github.com/bartekmp/MediCony/commit/20accdfa512ad5d56f0db74235eca21d27fb41f6))
+
+
 ## v2.5.16 (2026-10-10)
 
 ### Bug Fixes
