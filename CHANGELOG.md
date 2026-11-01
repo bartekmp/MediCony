@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v2.5.18 (2026-11-01)
+
+### Bug Fixes
+
+- Remove invalid vulnerability matchUpdateTypes from renovate config
+  ([#152](https://github.com/bartekmp/MediCony/pull/152),
+  [`614317a`](https://github.com/bartekmp/MediCony/commit/614317af7d999715d2821f35ad3a7052857f1154))
+
+
 ## v2.5.17 (2026-10-18)
 
 ### Bug Fixes
