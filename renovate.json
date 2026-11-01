@@ -2,12 +2,15 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "config:recommended",
+    "group:allNonMajor",
     ":automergePr",
     ":automergeMinor",
     ":combinePatchMinorReleases",
     ":semanticCommits",
-    ":disableDependencyDashboard",
-    "schedule:weekly"
+    ":disableDependencyDashboard"
+  ],
+  "schedule": [
+    "before 7am on the first day of the month"
   ],
   "labels": [
     "dependencies"
@@ -61,9 +64,6 @@
       "groupName": "Python dependencies",
       "labels": [
         "python"
-      ],
-      "schedule": [
-        "every weekend"
       ]
     },
     {
@@ -73,9 +73,6 @@
       "groupName": "Docker base images",
       "labels": [
         "docker"
-      ],
-      "schedule": [
-        "monthly"
       ],
       "pinDigests": true
     },
