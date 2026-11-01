@@ -81,12 +81,6 @@
     },
     {
       "matchUpdateTypes": [
-        "vulnerability"
-      ],
-      "prPriority": 20
-    },
-    {
-      "matchUpdateTypes": [
         "minor",
         "patch"
       ],
