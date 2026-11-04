@@ -238,7 +238,7 @@ class MediAPI:
 
     async def cancel_appointment(self, appointment: Appointment) -> bool:
         # First find the appointment using /appointments?AppointmentState=Planned endpoint on the server side
-        list_planned_appointments_url = "https://api-gateway-online24.medicover.pl/appointments/api/person-appointments/appointments?AppointmentState=Planned&Page=1&PageSize=20"
+        list_planned_appointments_url = "https://api-gateway-online24.medicover.pl/appointments/api/v2/appointments?AppointmentState=Planned&Page=1&PageSize=20"
         planned_appointments = await self.http_client.get(list_planned_appointments_url, {})
         if planned_appointments is not None and planned_appointments.status_code == 401:
             log.warning("Response 401. Re-authenticating")
@@ -256,7 +256,7 @@ class MediAPI:
             return False
 
         # Now send a DELETE request with the cancel_string
-        cancel_url = "https://api-gateway-online24.medicover.pl/appointments/api/person-appointments/appointments/"
+        cancel_url = "https://api-gateway-online24.medicover.pl/appointments/api/v2/appointments/"
         response = await self.http_client.delete(f"{cancel_url}{cancel_string}")
         if response["status"] == "Success":
             return True
