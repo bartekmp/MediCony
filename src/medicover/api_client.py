@@ -75,7 +75,7 @@ class MediAPI:
         appointment_type: WatchType = WatchType.STANDARD,
         exclusions: WatchExclusions = None,
     ) -> list[Appointment] | None:
-        appointment_url = "https://api-gateway-online24.medicover.pl/appointments/api/search-appointments/slots"
+        appointment_url = "https://api-gateway-online24.medicover.pl/appointments/api/v2/search-appointments/slots"
 
         params = {
             "RegionIds": region,
@@ -85,7 +85,7 @@ class MediAPI:
             "PageSize": 5000,
             "StartTime": str(start_date_time),
             "SlotSearchType": appointment_type.value,
-            "VisitType": "Center",
+            "isOverbookingSearchDisabled": "false",
         }
 
         if doctor:
