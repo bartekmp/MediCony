@@ -111,7 +111,7 @@ class MediAPI:
         appointment_type: WatchType = WatchType.STANDARD,
     ) -> Appointment | None:
         prices_url = "https://api-gateway-online24.medicover.pl/payment-gateway/api/v1/visit-prices"
-        booking_url = "https://api-gateway-online24.medicover.pl/appointments/api/search-appointments/book-appointment"
+        booking_url = "https://api-gateway-online24.medicover.pl/appointments/api/v2/search-appointments/book-appointment"
         params = {
             "visitDate": appointment_to_book.date_time.isoformat(),
             "visitDetails": [
@@ -270,7 +270,7 @@ class MediAPI:
         specialty: int | None = None,
         search_type: WatchType = WatchType.STANDARD,
     ) -> dict:
-        filters_url = "https://api-gateway-online24.medicover.pl/appointments/api/search-appointments/filters"
+        filters_url = "https://api-gateway-online24.medicover.pl/appointments/api/v2/search-appointments/filters"
         params = {"SlotSearchType": search_type.value}
         if region:
             params["RegionIds"] = str(region)
