@@ -75,7 +75,7 @@ class MediAPI:
         appointment_type: WatchType = WatchType.STANDARD,
         exclusions: WatchExclusions = None,
     ) -> list[Appointment] | None:
-        appointment_url = "https://api-gateway-online24.medicover.pl/appointments/api/search-appointments/slots"
+        appointment_url = "https://api-gateway-online24.medicover.pl/appointments/api/v2/search-appointments/slots"
 
         params = {
             "RegionIds": region,
@@ -85,7 +85,7 @@ class MediAPI:
             "PageSize": 5000,
             "StartTime": str(start_date_time),
             "SlotSearchType": appointment_type.value,
-            "VisitType": "Center",
+            "isOverbookingSearchDisabled": "false",
         }
 
         if doctor:
@@ -111,7 +111,7 @@ class MediAPI:
         appointment_type: WatchType = WatchType.STANDARD,
     ) -> Appointment | None:
         prices_url = "https://api-gateway-online24.medicover.pl/payment-gateway/api/v1/visit-prices"
-        booking_url = "https://api-gateway-online24.medicover.pl/appointments/api/search-appointments/book-appointment"
+        booking_url = "https://api-gateway-online24.medicover.pl/appointments/api/v2/search-appointments/book-appointment"
         params = {
             "visitDate": appointment_to_book.date_time.isoformat(),
             "visitDetails": [
@@ -238,7 +238,7 @@ class MediAPI:
 
     async def cancel_appointment(self, appointment: Appointment) -> bool:
         # First find the appointment using /appointments?AppointmentState=Planned endpoint on the server side
-        list_planned_appointments_url = "https://api-gateway-online24.medicover.pl/appointments/api/person-appointments/appointments?AppointmentState=Planned&Page=1&PageSize=20"
+        list_planned_appointments_url = "https://api-gateway-online24.medicover.pl/appointments/api/v2/appointments?AppointmentState=Planned&Page=1&PageSize=20"
         planned_appointments = await self.http_client.get(list_planned_appointments_url, {})
         if planned_appointments is not None and planned_appointments.status_code == 401:
             log.warning("Response 401. Re-authenticating")
@@ -256,7 +256,7 @@ class MediAPI:
             return False
 
         # Now send a DELETE request with the cancel_string
-        cancel_url = "https://api-gateway-online24.medicover.pl/appointments/api/person-appointments/appointments/"
+        cancel_url = "https://api-gateway-online24.medicover.pl/appointments/api/v2/appointments/"
         response = await self.http_client.delete(f"{cancel_url}{cancel_string}")
         if response["status"] == "Success":
             return True
@@ -270,7 +270,7 @@ class MediAPI:
         specialty: int | None = None,
         search_type: WatchType = WatchType.STANDARD,
     ) -> dict:
-        filters_url = "https://api-gateway-online24.medicover.pl/appointments/api/search-appointments/filters"
+        filters_url = "https://api-gateway-online24.medicover.pl/appointments/api/v2/search-appointments/filters"
         params = {"SlotSearchType": search_type.value}
         if region:
             params["RegionIds"] = str(region)
