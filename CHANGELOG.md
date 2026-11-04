@@ -2,6 +2,25 @@
 
 <!-- version list -->
 
+## v2.5.19 (2026-11-04)
+
+### Bug Fixes
+
+- Medicover v2 API ([#153](https://github.com/bartekmp/MediCony/pull/153),
+  [`3294311`](https://github.com/bartekmp/MediCony/commit/329431172a408fc5555fefbf2f82b0083b8ceeef))
+
+- Use v2 appointments endpoint for list planned and cancel
+  ([#153](https://github.com/bartekmp/MediCony/pull/153),
+  [`3294311`](https://github.com/bartekmp/MediCony/commit/329431172a408fc5555fefbf2f82b0083b8ceeef))
+
+- Use v2 for book-appointment and filters endpoints
+  ([#153](https://github.com/bartekmp/MediCony/pull/153),
+  [`3294311`](https://github.com/bartekmp/MediCony/commit/329431172a408fc5555fefbf2f82b0083b8ceeef))
+
+- Use v2 search-appointments slots API ([#153](https://github.com/bartekmp/MediCony/pull/153),
+  [`3294311`](https://github.com/bartekmp/MediCony/commit/329431172a408fc5555fefbf2f82b0083b8ceeef))
+
+
 ## v2.5.18 (2026-11-01)
 
 ### Bug Fixes
